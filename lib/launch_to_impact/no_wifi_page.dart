@@ -1,9 +1,7 @@
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
+import 'package:fithome_app/launch_to_impact/launch_state.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-
-import 'code_route_check.dart';
-import 'landing_page.dart';
 
 class NoWifiPage extends StatelessWidget {
   final Logger log = Logger('no_wifi_page.dart');
@@ -47,17 +45,15 @@ class NoWifiPage extends StatelessWidget {
   }
 
   void _tryAgain(BuildContext context) async {
-    bool isConnected = await RouteCheck().isWifi();
+    bool isConnected = await LaunchState().isWifi(addToStream: false);
     if (isConnected) {
       log.info('The Try again button was pushed.  We connected. ');
       // Pop off the no wifi page
-      log.info(Navigator.canPop(context));
-      Navigator.maybePop(context);
-      // Push on the Landing page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => LandingPage()),
-      );
+      log.info('check if can pop a widget: ${Navigator.canPop(context)}');
+      //Navigator.maybePop(context);
+      log.info('check if can pop a widget: ${Navigator.canPop(context)}');
+      //Navigator.maybePop(context);
+      LaunchState().setLaunchState(state: InitState.wifi);
     } else {
       log.info('The Try again button was pushed. Still not connected.');
       PlatformAlertDialog(

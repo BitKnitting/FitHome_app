@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:fithome_app/launch_to_impact/signin/validators.dart';
 
-import 'landing_page.dart';
 
-class WaitingListPage extends StatefulWidget with EmailAndPasswordValidators {
+
+class WaitListPage extends StatefulWidget with EmailAndPasswordValidators {
   @override
-  _WaitingListPageState createState() => _WaitingListPageState();
+  _WaitListPageState createState() => _WaitListPageState();
 }
 
-class _WaitingListPageState extends State<WaitingListPage> {
+class _WaitListPageState extends State<WaitListPage> {
   final Logger log = Logger('waitlist_page.dart');
   final TextEditingController _emailController = TextEditingController();
 
