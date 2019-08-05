@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
+import 'launch_to_impact/launch_check.dart';
 import 'launch_to_impact/launch_page.dart';
 import 'launch_to_impact/signin/auth_service.dart';
 
@@ -8,7 +9,7 @@ import 'launch_to_impact/signin/auth_service.dart';
 // between widgets below the MaterialApp Widget
 import 'package:provider/provider.dart';
 
-void main()  {
+void main() {
   _initLogger();
   runApp(MyApp());
 }
@@ -16,6 +17,7 @@ void main()  {
 // *************************************************************************************
 // Starts with login routing.
 class MyApp extends StatelessWidget {
+  final LaunchCheck launchCheck = LaunchCheck();
   @override
   Widget build(BuildContext context) {
     String title = 'FitHome';
@@ -24,12 +26,11 @@ class MyApp extends StatelessWidget {
     return Provider<AuthBase>(
       builder: (context) => Auth(),
       child: MaterialApp(
-        title: title,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: LaunchPage(),
-      ),
+          title: title,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          home: LaunchPage()),
     );
   }
 }
