@@ -85,9 +85,9 @@ class Auth implements AuthBase {
     // sign in with these.  If sign in fails, send back a null member.  If it succeeds,
     // We'll store the email and password after a successful sign-in
     if ((email == null) || (password == null)) {
-      log.info('email and password are null');
+      log.info('email and passwordwere not passed in.');
       if (await _isCredsInLocalStore()) {
-        log.info('email and password are in local store');
+        log.info('email and password are in local store.');
         member = Member();
         // The Member get for email and password will retrieve values from shared preferences.
         _email = await member.email;
@@ -111,25 +111,16 @@ class Auth implements AuthBase {
     } on PlatformException catch (e) {
       log.info('Sign in failed.  Error: $e');
       if (e.code == 'ERROR_USER_NOT_FOUND') {
-        // The member does not exist.  Should I create a member based on this email and password?
-        // (show email, opportunity to show password)
-        final bool doCreateNewMember = await PlatformAlertDialog(
-          title: 'The member does not exist.',
-          content: 'Should I create a member?',
-          cancelActionText: 'No',
-          defaultActionText: 'Yes',
-        ).show(context);
-        if (doCreateNewMember) {
-          return _createMemberAccount(context, _email, _password);
-        } else {
-          print('do not create new member');
-        }
+        log.info('There is an email and password stored locally, but we cannot log into the account db with them, member is null.');
+        return null;
       } else {
+        log.info('Error: ${e.message}, member is null.');
         PlatformAlertDialog(
           title: 'Sign-in Error!',
           content: '${e.message}',
           defaultActionText: 'OK',
         ).show(context);
+        return null;
       }
     }
     return _memberFromFirebase(user);

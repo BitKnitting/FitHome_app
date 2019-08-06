@@ -1,14 +1,13 @@
 import 'dart:io';
 
+import 'package:fithome_app/common_code/platform_alert_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
 enum UserState { unknown, waitlist, start_training, member }
-enum WifiState { noWifi, wifi }
 
 class LaunchCheck {
   final Logger log = Logger('launch_check.dart');
-  WifiState wifiState = WifiState.noWifi;
 
 //
 //*Returns True if the app can access wifi.
@@ -17,53 +16,34 @@ class LaunchCheck {
       final result = await InternetAddress.lookup('google.com');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
         log.info('We can connect to wifi.');
-        wifiState = WifiState.wifi;
         return true;
       }
     } on SocketException catch (_) {
       log.info('We cannot connect to wifi.');
-      wifiState = WifiState.noWifi;
       return false;
     }
-    wifiState = WifiState.wifi;
     return true;
   }
 
-  void askForWifi(BuildContext context) {
-    log.info('in askForWifi');
-
-    Widget okButton = FlatButton(
-      child: Text("Try Again"),
-      onPressed: () async {
-        Navigator.of(context).pop(); // dismiss dialog
-
-        bool bIsWifi = await isWifi();
-        if (!bIsWifi) {
-          askForWifi(context);
-        }
-      },
-    );
-    // set up the AlertDialog
-    AlertDialog alert = AlertDialog(
-      title: Text("Where for out thou, wifi?"),
-      content: Text("Please check the wifi connection."),
-      actions: [
-        okButton,
-      ],
-    );
-    // show the dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
+  Future<void> askUserToFixWifi(BuildContext context) async {
+    log.info('askUserToFixWifi');
+    final tryAgain = await PlatformAlertDialog(
+      title: 'Cannot access the Internet',
+      content: 'Please check the wifi connection',
+      defaultActionText: 'Try Again',
+    ).show(context);
+    if (tryAgain == true) {
+      final bool bIsWifi = await isWifi();
+      if (!bIsWifi) {
+        await askUserToFixWifi(context);
+      }
+    }
   }
 
   Future<UserState> checkForMembership(BuildContext context) async {
     log.info('Checking for membership type.');
     if (!await isWifi()) {
-      askForWifi(context);
+      await askUserToFixWifi(context);
     }
     log.info('We have access to wifi.  Checking if user is already a member.');
     // if the user is already a member, go to the impact page.

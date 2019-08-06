@@ -26,6 +26,12 @@ class LaunchPage extends StatelessWidget {
                       case UserState.waitlist:
                         return Text('waitlist');
                     }
+                  } else {
+                    return Scaffold(
+                      body: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
                   }
                   return Text('Please contact fithome member services.');
                 })));
