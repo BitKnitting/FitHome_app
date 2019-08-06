@@ -1,15 +1,16 @@
 import 'package:fithome_app/common_code/form_submit_button.dart';
+import 'package:fithome_app/launch_to_impact/db_lookup.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:fithome_app/launch_to_impact/signin/validators.dart';
 
-class WaitListPage extends StatefulWidget with EmailAndPasswordValidators {
+class StartTrainingPage extends StatefulWidget with EmailAndPasswordValidators {
   @override
-  _WaitListPageState createState() => _WaitListPageState();
+  _StartTrainingPageState createState() => _StartTrainingPageState();
 }
 
-class _WaitListPageState extends State<WaitListPage> {
-  final Logger log = Logger('waitlist_page.dart');
+class _StartTrainingPageState extends State<StartTrainingPage> {
+  final Logger log = Logger('start_training_page.dart');
   final TextEditingController _emailController = TextEditingController();
 
   String get _email => _emailController.text;
@@ -17,11 +18,12 @@ class _WaitListPageState extends State<WaitListPage> {
   List<Widget> _buildChildren() {
     bool _submitEnabled = widget.emailValidator.isValid(_email);
     return [
+      _buildZipCode(),
       SizedBox(height: 100.0),
       _buildEmailTextField(),
       SizedBox(height: 10.0),
       FormSubmitButton(
-        text: 'JOIN WAITLIST',
+        text: 'Start Training',
         // The button is only active if the email is formatted correctly.
         onPressed: _submitEnabled ? _submit : null,
       ),
@@ -36,6 +38,27 @@ class _WaitListPageState extends State<WaitListPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: _buildChildren(),
       ),
+    );
+  }
+
+  Widget _buildZipCode() {
+    return Column(
+      children: <Widget>[
+        Text('Please choose your zip code.'),
+        FutureBuilder(
+            future: DbLookup().getZipCodes(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+
+                }
+  return Container();
+              {
+              
+              }
+            
+            }),
+      ],
     );
   }
 
@@ -70,7 +93,7 @@ class _WaitListPageState extends State<WaitListPage> {
 
 //* Put email into Firebase wait list node.
   void _submit() {
-    log.info('pressed join waitlist button.');
+    log.info('pressed join StartTraining button.');
   }
 
 //* Build Widget

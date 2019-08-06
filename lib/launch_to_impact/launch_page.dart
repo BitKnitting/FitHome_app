@@ -1,4 +1,6 @@
 import 'package:fithome_app/launch_to_impact/launch_check.dart';
+import 'package:fithome_app/launch_to_impact/start_training.dart';
+import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
@@ -20,11 +22,11 @@ class LaunchPage extends StatelessWidget {
                   if (snapshot.connectionState == ConnectionState.done) {
                     switch (snapshot.data) {
                       case UserState.start_training:
-                        return Text('start_training');
+                        return StartTrainingPage();
                       case UserState.member:
                         return Text('member');
                       case UserState.waitlist:
-                        return Text('waitlist');
+                        return WaitListPage();
                     }
                   } else {
                     return Scaffold(

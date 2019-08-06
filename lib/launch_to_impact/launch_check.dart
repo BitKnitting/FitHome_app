@@ -1,8 +1,12 @@
 import 'dart:io';
 
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
+import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:provider/provider.dart';
+
+import 'signin/auth_service.dart';
 
 enum UserState { unknown, waitlist, start_training, member }
 
@@ -41,16 +45,37 @@ class LaunchCheck {
   }
 
   Future<UserState> checkForMembership(BuildContext context) async {
+    final auth = Provider.of<AuthBase>(context);
     log.info('Checking for membership type.');
     if (!await isWifi()) {
       await askUserToFixWifi(context);
     }
     log.info('We have access to wifi.  Checking if user is already a member.');
-    // if the user is already a member, go to the impact page.
-    // if the user is not a member, check if there is a monitor available.
-    // if there is not a monitor available, go to the waitlist page.
-    // This means there is a monitor available and the use is not a member.  Go to the start training page.
-    await Future.delayed(Duration(seconds: 2));
-    return UserState.member;
+    Member member = await auth.signIn(context);
+    if (member == null) {
+      // User is not a member.
+      // Check to see if there are available monitors.
+      bool availableMonitors = await _checkMonitorAvailability(member);
+      // if there is not a monitor available, go to the waitlist page.
+      if (!availableMonitors) {
+        log.info('No monitor is available.  Check about waitlist.');
+        return UserState.waitlist;
+      } else {
+        // This means there is a monitor available and the use is not a member.  Go to the start training page.
+        log.info('A monitor is available.  Start training.');
+        return UserState.start_training;
+      }
+    } else {
+      // The user is already a member - load the impact page.
+      await Future.delayed(Duration(seconds: 2));
+      log.info('The user can log in, already a member.');
+      return UserState.member;
+    }
+  }
+
+  Future<bool> _checkMonitorAvailability(Member member) async {
+    // The member is signed in, so access the Firebase RT available_monitors node...
+
+    return true;
   }
 }
