@@ -12,6 +12,7 @@ class StartTrainingPage extends StatefulWidget with EmailAndPasswordValidators {
 class _StartTrainingPageState extends State<StartTrainingPage> {
   final Logger log = Logger('start_training_page.dart');
   final TextEditingController _emailController = TextEditingController();
+  String zipCodeValue = '';
 
   String get _email => _emailController.text;
 
@@ -21,12 +22,12 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
       _buildZipCode(),
       SizedBox(height: 100.0),
       _buildEmailTextField(),
-      SizedBox(height: 10.0),
-      FormSubmitButton(
-        text: 'Start Training',
-        // The button is only active if the email is formatted correctly.
-        onPressed: _submitEnabled ? _submit : null,
-      ),
+      // SizedBox(height: 10.0),
+      // FormSubmitButton(
+      //   text: 'Start Training',
+      //   // The button is only active if the email is formatted correctly.
+      //   onPressed: _submitEnabled ? _submit : null,
+      // ),
     ];
   }
 
@@ -45,20 +46,50 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
     return Column(
       children: <Widget>[
         Text('Please choose your zip code.'),
-        FutureBuilder(
-            future: DbLookup().getZipCodes(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasError) {
-
-                }
-  return Container();
-              {
-              
-              }
-            
-            }),
+        _zipCodeDropDown(),
       ],
+    );
+  }
+
+  Widget _zipCodeDropDown() {
+    return FutureBuilder(
+      future: DbLookup().getZipCodes(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            //               //*Todo: Handle shanpshot error.
+          }
+          if (snapshot.hasData) {
+            List<String> zipCodes = List<String>.from(snapshot.data);
+            zipCodeValue = zipCodes[0];
+            return Center(
+              child: Container(
+                height: 50,
+                child: DropdownButton<String>(
+                  items: zipCodes.map((String dropDownStringItem) {
+                    return DropdownMenuItem<String>(
+                      value: dropDownStringItem,
+                      child: Text(dropDownStringItem),
+                    );
+                  }).toList(),
+                  onChanged: (String newValueSelected) {
+                    setState(() {
+                      zipCodeValue = newValueSelected;
+                    });
+                  },
+                  value: zipCodeValue,
+                ),
+              ),
+            );
+          }
+        } else {
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+      },
     );
   }
 
