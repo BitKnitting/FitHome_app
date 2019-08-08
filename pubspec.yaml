@@ -25,6 +25,7 @@ dependencies:
   # signIn.... changed after this version...so using 0.11.1+12 for now.
   firebase_auth: ^0.11.1+12
   email_validator: ^1.0.0
+  firebase_database: ^3.0.5
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

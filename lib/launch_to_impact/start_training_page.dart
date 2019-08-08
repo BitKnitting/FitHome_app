@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:fithome_app/common_code/form_submit_button.dart';
 import 'package:fithome_app/launch_to_impact/db_lookup.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,6 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
   final Logger log = Logger('start_training_page.dart');
   final TextEditingController _emailController = TextEditingController();
   String zipCodeValue = '';
-
   String get _email => _emailController.text;
 
   List<Widget> _buildChildren() {
@@ -22,23 +22,27 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
       _buildZipCode(),
       SizedBox(height: 100.0),
       _buildEmailTextField(),
-      // SizedBox(height: 10.0),
-      // FormSubmitButton(
-      //   text: 'Start Training',
-      //   // The button is only active if the email is formatted correctly.
-      //   onPressed: _submitEnabled ? _submit : null,
-      // ),
+      SizedBox(height: 10.0),
+      FormSubmitButton(
+        text: 'Join waitlist',
+        // The button is only active if the email is formatted correctly.
+        onPressed: _submitEnabled ? _submit : null,
+      ),
     ];
   }
 
   Widget _buildContent() {
-    return Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        // mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: _buildChildren(),
-      ),
+    return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Container(
+              child: Column(
+            // mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: _buildChildren(),
+          ),
+            ),
+          ),
     );
   }
 
@@ -53,15 +57,17 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
 
   Widget _zipCodeDropDown() {
     return FutureBuilder(
-      future: DbLookup().getZipCodes(),
+      //future: FirebaseDatabase.instance.reference().child("zipcodes").once(),
+      future: ZipCodes().getZipCodes(test: true),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
             //               //*Todo: Handle shanpshot error.
           }
           if (snapshot.hasData) {
-            List<String> zipCodes = List<String>.from(snapshot.data);
-            zipCodeValue = zipCodes[0];
+            List<String> zipCodes = snapshot.data;
+            log.info('snapshot has zipcodes: $zipCodes');
+
             return Center(
               child: Container(
                 height: 50,
@@ -77,10 +83,12 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
                       zipCodeValue = newValueSelected;
                     });
                   },
-                  value: zipCodeValue,
+                  value: zipCodeValue.isEmpty ? zipCodes[0] : zipCodeValue,
                 ),
               ),
             );
+          } else {
+            return _errorDialog();
           }
         } else {
           return Scaffold(
@@ -91,6 +99,12 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
         }
       },
     );
+  }
+
+  Widget _errorDialog() {
+    log.info('error getting zip codes.  Connection done, but hasData = false.');
+    return Text(
+        'error getting zip codes.  Connection done, but hasData = false.');
   }
 
   Widget _buildEmailTextField() {

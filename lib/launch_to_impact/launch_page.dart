@@ -1,5 +1,5 @@
 import 'package:fithome_app/launch_to_impact/launch_check.dart';
-import 'package:fithome_app/launch_to_impact/start_training.dart';
+import 'package:fithome_app/launch_to_impact/start_training_page.dart';
 import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
 
 import 'package:flutter/material.dart';
