@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
-import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';

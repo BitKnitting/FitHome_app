@@ -111,7 +111,8 @@ class Auth implements AuthBase {
     } on PlatformException catch (e) {
       log.info('Sign in failed.  Error: $e');
       if (e.code == 'ERROR_USER_NOT_FOUND') {
-        log.info('There is an email and password stored locally, but we cannot log into the account db with them, member is null.');
+        log.info(
+            'There is an email and password stored locally, but we cannot log into the account db with them, member is null.');
         return null;
       } else {
         log.info('Error: ${e.message}, member is null.');
@@ -156,26 +157,26 @@ class Auth implements AuthBase {
   // _createMemberAccount
   // return a member instance based on the logged in user's Firebase User ID.
   //**************************************************************************
-  Future<Member> _createMemberAccount(
-      BuildContext context, String email, String password) async {
-    FirebaseUser user;
-    try {
-      user = await _firebaseAuth.createUserWithEmailAndPassword(
-          email: email, password: password);
-    } on PlatformException catch (e) {
-      PlatformAlertDialog(
-        title: 'Create Member Error!',
-        content: '${e.message}',
-        defaultActionText: 'OK',
-      ).show(context);
-    }
-    // Store email and password in shared preferences.
-    log.info(
-        'We are able to create the account.  Storing email and password in Shared Preferences.');
-    Member().email = email;
-    Member().password = password;
-    return _memberFromFirebase(user);
-  }
+  // Future<Member> _createMemberAccount(
+  //     BuildContext context, String email, String password) async {
+  //   FirebaseUser user;
+  //   try {
+  //     user = await _firebaseAuth.createUserWithEmailAndPassword(
+  //         email: email, password: password);
+  //   } on PlatformException catch (e) {
+  //     PlatformAlertDialog(
+  //       title: 'Create Member Error!',
+  //       content: '${e.message}',
+  //       defaultActionText: 'OK',
+  //     ).show(context);
+  //   }
+  //   // Store email and password in shared preferences.
+  //   log.info(
+  //       'We are able to create the account.  Storing email and password in Shared Preferences.');
+  //   Member().email = email;
+  //   Member().password = password;
+  //   return _memberFromFirebase(user);
+  // }
 
   // Future<void> signOut() async {
   //   return await _firebaseAuth.signOut();

@@ -2,6 +2,7 @@ import 'package:fithome_app/launch_to_impact/launch_check.dart';
 import 'package:fithome_app/launch_to_impact/start_training_page.dart';
 import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
 
+
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
@@ -20,6 +21,8 @@ class LaunchPage extends StatelessWidget {
                 future: launchCheck.checkForMembership(context),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
+                    log.info(
+                        'checking for membership is done.  state: ${snapshot.data}');
                     switch (snapshot.data) {
                       case UserState.start_training:
                         return StartTrainingPage();
