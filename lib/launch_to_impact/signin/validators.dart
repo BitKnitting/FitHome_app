@@ -31,7 +31,6 @@ class PhoneValidate implements StringValidator {
   }
 }
 
-// Validate the phone
 
 class Validators {
   final StringValidator emailValidator = EmailValidate();
@@ -43,3 +42,4 @@ class Validators {
   final String hintPhoneText = 'Mobile phone number';
   final String hintEmailText = 'Email';
 }
+

@@ -1,6 +1,9 @@
 import 'package:fithome_app/launch_to_impact/signin/validators.dart';
 import 'package:flutter/material.dart';
-
+// * Text field widgets that include validations.
+//********************************************************************* */
+// * Email stateful Widgth
+//********************************************************************* */
 class EmailEntryWidget extends StatefulWidget with Validators {
   @override
   _EmailEntryWidgetState createState() => _EmailEntryWidgetState();
@@ -35,7 +38,9 @@ class _EmailEntryWidgetState extends State<EmailEntryWidget> {
     setState(() {});
   }
 }
-
+//********************************************************************* */
+// * Phone stateful Widgth
+//********************************************************************* */
 class PhoneEntryWidget extends StatefulWidget with Validators {
   @override
   _PhoneEntryWidgetState createState() => _PhoneEntryWidgetState();
@@ -43,10 +48,12 @@ class PhoneEntryWidget extends StatefulWidget with Validators {
 
 class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
   final TextEditingController _phoneController = TextEditingController();
-  String get _phone => _phoneController.text;
+  bool isValid() {
+    return widget.textfieldValidator.isValid(_phoneController.text);
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool _phoneIsValid = widget.phoneValidator.isValid(_phone);
     return TextField(
       controller: _phoneController,
       maxLines: 1,
@@ -59,9 +66,9 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
           Icons.mail,
           color: Colors.grey,
         ),
-        errorText: _phoneIsValid ? null : widget.invalidPhoneErrorText,
+        errorText: isValid() ? null : widget.invalidPhoneErrorText,
       ),
-      onChanged: (_phone) => _updateState(),
+      onChanged: (value) => _updateState(),
     );
   }
 
@@ -70,7 +77,9 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     setState(() {});
   }
 }
-
+//********************************************************************* */
+// * TextField stateful Text Widgth
+//********************************************************************* */
 class TextEntryWidget extends StatefulWidget with Validators {
   @required
   final String hint;
@@ -86,11 +95,12 @@ class TextEntryWidget extends StatefulWidget with Validators {
 
 class _TextEntryWidgetState extends State<TextEntryWidget> {
   final TextEditingController _textController = TextEditingController();
-//  String get _text => _textController.text;
+  bool isValid() {
+    return widget.textfieldValidator.isValid(_textController.text);
+  }
 
   @override
   Widget build(BuildContext context) {
-    bool _textIsValid = widget.textfieldValidator.isValid(_textController.text);
     return TextField(
       obscureText: widget.obscureText,
       controller: _textController,
@@ -101,7 +111,7 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
       decoration: InputDecoration(
         hintText: widget.hint,
         icon: Icon(widget.icon),
-        errorText: _textIsValid
+        errorText: isValid()
             ? null
             : widget.hint + ' ' + widget.invalidTextfieldErrorText,
       ),
@@ -114,3 +124,6 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
     setState(() {});
   }
 }
+//********************************************************************* */
+// * Notify when a widget's entry is valid
+//********************************************************************* */

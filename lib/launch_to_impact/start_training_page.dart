@@ -14,10 +14,27 @@ class StartTrainingPage extends StatefulWidget with Validators {
 class _StartTrainingPageState extends State<StartTrainingPage> {
   final Logger log = Logger('start_training_page.dart');
 
+  void callback() {
+    print('hello');
+  }
+
+  void onChanged() {
+    setState(() {
+      log.info('onChanged - setting state');
+    });
+  }
+
   Widget _buildContent() {
+    //*TODO:SetState is occuring at the TextEntryWidget class.  So we're not getting a SetState.  Need a callback when the fields are validated so can turn button to blue.
+    TextEntryWidget nameEntry = TextEntryWidget(
+        hint: 'Name', icon: Icons.perm_identity);
+    TextEntryWidget addressEntry = TextEntryWidget(
+        hint: 'Address', icon: Icons.perm_identity);
     //*TODO: Next step - create account and go to setting up monitor installation appointment page.
     //*TODO: enable button when all fields have been validated.
-    bool _submitEnabled = false;
+    //*TODO: test with keyboard.  Make sure focus and keyboard "DONE" button are what you want.
+ 
+
     return Padding(
       padding: const EdgeInsets.all(30.0),
       child: Column(
@@ -28,19 +45,13 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
               flex: 2,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 15.0),
-                child: TextEntryWidget(
-                  hint: 'Name',
-                  icon: Icons.perm_identity,
-                ),
+                child: nameEntry,
               )),
           Flexible(
               flex: 2,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 15.0),
-                child: TextEntryWidget(
-                  hint: 'Address',
-                  icon: Icons.home,
-                ),
+                child: addressEntry,
               )),
           Flexible(
               flex: 2,
@@ -80,8 +91,9 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
               padding: const EdgeInsets.all(16.0),
               child: FormSubmitButton(
                 text: 'Start Training',
-                // The button is only active if the email is formatted correctly.
-                onPressed: _submitEnabled ? _submit : null,
+                // The button is only active if the fields are validated.
+                //*TODO: Changing to blue when fields are validated.
+                onPressed: false ? _submit : null,
               ),
             ),
           ),
