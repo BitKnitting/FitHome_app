@@ -26,15 +26,14 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
 
   Widget _buildContent() {
     //*TODO:SetState is occuring at the TextEntryWidget class.  So we're not getting a SetState.  Need a callback when the fields are validated so can turn button to blue.
-    TextEntryWidget nameEntry = TextEntryWidget(
-        hint: 'Name', icon: Icons.perm_identity);
-    TextEntryWidget addressEntry = TextEntryWidget(
-        hint: 'Address', icon: Icons.perm_identity);
+    TextEntryWidget nameEntry =
+        TextEntryWidget(hint: 'Name', icon: Icons.person);
+    TextEntryWidget addressEntry =
+        TextEntryWidget(hint: 'Address', icon: Icons.home);
     //*TODO: Next step - create account and go to setting up monitor installation appointment page.
     //*TODO: enable button when all fields have been validated.
     //*TODO: test with keyboard.  Make sure focus and keyboard "DONE" button are what you want.
- 
-
+    
     return Padding(
       padding: const EdgeInsets.all(30.0),
       child: Column(
@@ -93,7 +92,7 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
                 text: 'Start Training',
                 // The button is only active if the fields are validated.
                 //*TODO: Changing to blue when fields are validated.
-                onPressed: false ? _submit : null,
+                onPressed: true ? _submit : null,
               ),
             ),
           ),
@@ -104,6 +103,7 @@ class _StartTrainingPageState extends State<StartTrainingPage> {
 
 //* Create an account and go to making an appt with electrician.
   void _submit() {
+    
     log.info('pressed join StartTraining button.');
   }
 

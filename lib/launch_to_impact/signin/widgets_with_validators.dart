@@ -1,5 +1,6 @@
 import 'package:fithome_app/launch_to_impact/signin/validators.dart';
 import 'package:flutter/material.dart';
+
 // * Text field widgets that include validations.
 //********************************************************************* */
 // * Email stateful Widgth
@@ -38,6 +39,7 @@ class _EmailEntryWidgetState extends State<EmailEntryWidget> {
     setState(() {});
   }
 }
+
 //********************************************************************* */
 // * Phone stateful Widgth
 //********************************************************************* */
@@ -63,7 +65,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
       decoration: InputDecoration(
         hintText: widget.hintPhoneText,
         icon: Icon(
-          Icons.mail,
+          Icons.phone,
           color: Colors.grey,
         ),
         errorText: isValid() ? null : widget.invalidPhoneErrorText,
@@ -77,6 +79,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     setState(() {});
   }
 }
+
 //********************************************************************* */
 // * TextField stateful Text Widgth
 //********************************************************************* */
@@ -86,8 +89,13 @@ class TextEntryWidget extends StatefulWidget with Validators {
   @required
   final IconData icon;
   final bool obscureText;
+  bool bIsValid=false;
 
   TextEntryWidget({this.hint, this.icon, this.obscureText = false});
+  bool isValid() {
+    return bIsValid;
+
+  }
 
   @override
   _TextEntryWidgetState createState() => _TextEntryWidgetState();
@@ -95,7 +103,8 @@ class TextEntryWidget extends StatefulWidget with Validators {
 
 class _TextEntryWidgetState extends State<TextEntryWidget> {
   final TextEditingController _textController = TextEditingController();
-  bool isValid() {
+  bool _isValid() {
+    widget.bIsValid = widget.textfieldValidator.isValid(_textController.text);
     return widget.textfieldValidator.isValid(_textController.text);
   }
 
@@ -111,7 +120,7 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
       decoration: InputDecoration(
         hintText: widget.hint,
         icon: Icon(widget.icon),
-        errorText: isValid()
+        errorText: _isValid()
             ? null
             : widget.hint + ' ' + widget.invalidTextfieldErrorText,
       ),
@@ -124,6 +133,3 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
     setState(() {});
   }
 }
-//********************************************************************* */
-// * Notify when a widget's entry is valid
-//********************************************************************* */

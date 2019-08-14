@@ -50,6 +50,7 @@ class _WaitListPageState extends State<WaitListPage> {
 
 //* Put email into Firebase wait list node.
   void _submit() {
+  
     log.info('pressed join JOIN WAITLIST button.');
   }
 
