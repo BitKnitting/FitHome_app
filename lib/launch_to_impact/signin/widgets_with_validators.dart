@@ -1,5 +1,6 @@
 import 'package:fithome_app/launch_to_impact/signin/validators.dart';
 import 'package:flutter/material.dart';
+
 // * Text field widgets that include validations.
 //********************************************************************* */
 // * Email stateful Widgth
@@ -12,6 +13,7 @@ class EmailEntryWidget extends StatefulWidget with Validators {
 class _EmailEntryWidgetState extends State<EmailEntryWidget> {
   final TextEditingController _emailController = TextEditingController();
   String get _email => _emailController.text;
+
   @override
   Widget build(BuildContext context) {
     bool _emailIsValid = widget.emailValidator.isValid(_email);
@@ -38,6 +40,7 @@ class _EmailEntryWidgetState extends State<EmailEntryWidget> {
     setState(() {});
   }
 }
+
 //********************************************************************* */
 // * Phone stateful Widgth
 //********************************************************************* */
@@ -77,6 +80,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     setState(() {});
   }
 }
+
 //********************************************************************* */
 // * TextField stateful Text Widgth
 //********************************************************************* */
@@ -85,9 +89,13 @@ class TextEntryWidget extends StatefulWidget with Validators {
   final String hint;
   @required
   final IconData icon;
+  @required
+  final ValueKey valueKey;
   final bool obscureText;
+  final validField = ValueNotifier(false);
 
-  TextEntryWidget({this.hint, this.icon, this.obscureText = false});
+  TextEntryWidget(
+      {this.hint, this.icon, this.valueKey, this.obscureText = false});
 
   @override
   _TextEntryWidgetState createState() => _TextEntryWidgetState();
@@ -95,6 +103,7 @@ class TextEntryWidget extends StatefulWidget with Validators {
 
 class _TextEntryWidgetState extends State<TextEntryWidget> {
   final TextEditingController _textController = TextEditingController();
+
   bool isValid() {
     return widget.textfieldValidator.isValid(_textController.text);
   }
@@ -104,6 +113,7 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
     return TextField(
       obscureText: widget.obscureText,
       controller: _textController,
+      key: widget.valueKey,
       maxLines: 1,
       keyboardType: TextInputType.text,
       autofocus: false,
@@ -121,9 +131,26 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
 
   // Updates the button based on validation of the email field.  If valid email, activate button.
   void _updateState() {
-    setState(() {});
+    setState(() {
+      if (isValid()) {
+        widget.validField.value = true;
+      } else {
+        widget.validField.value = false;
+      }
+      print(' widget Valid field - ${widget.validField.value} }');
+    });
   }
 }
+
 //********************************************************************* */
 // * Notify when a widget's entry is valid
 //********************************************************************* */
+// class EntryChangeNotifier {
+//   final _controller = StreamController<ValueKey>();
+//   void notify(ValueKey key) {
+//     _controller.sink.add(key);
+//   }
+//   bool isValid(ValueKey key) {
+//     return false;
+//   }
+// }
