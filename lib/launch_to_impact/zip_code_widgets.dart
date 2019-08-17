@@ -1,3 +1,7 @@
+//*TODO: ValueNotifier of good zipcode to pass to parent.
+//*TODO: if good zipcode chosen, delete/hide  "Start by choosing your zipcode"
+//*TODO: Platform alert dialog if other
+//*TODO: All other entry fields disabled until a good zipcode is chosen.
 import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
@@ -9,7 +13,7 @@ final Logger log = Logger('zip_code_widgets.dart');
 class ZipCodes {
   Future<List<String>> getZipCodes({bool test = true}) async {
     if (test) {
-      return ['98033', '92122', 'other'];
+      return ['Please choose', '98033', '92122', 'other'];
     } else {
       DataSnapshot zips =
           await FirebaseDatabase.instance.reference().child('zipcodes').once();
@@ -20,28 +24,39 @@ class ZipCodes {
   }
 }
 
-class ZipCode extends StatelessWidget {
+class ZipCode extends StatefulWidget {
+  @override
+  _ZipCodeState createState() => _ZipCodeState();
+}
+
+class _ZipCodeState extends State<ZipCode> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Text('Please Choose Your Zip Code.', style: TextStyle(fontSize: 20)),
-        //Flexible(child: _zipCodeDropDown()),
-        Flexible(child: _zipDropDown()),
-        //myZip(),
-      ],
+    return Container(
+      height: 50,
+      child: Column(
+        children: <Widget>[
+          Flexible(child: _zipDropDown()),
+        ],
+      ),
     );
   }
 
+  String _zipCodeValue = '';
   Widget _zipDropDown() {
-    String _zipCodeValue = '';
+    void _updateState(String newZipValue) {
+      setState(() {
+        _zipCodeValue = newZipValue;
+      });
+    }
+
     return FutureBuilder(
       //future: FirebaseDatabase.instance.reference().child("zipcodes").once(),
       future: ZipCodes().getZipCodes(test: true),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
-            //*TODO: Test with zipcodes removed from Firebase 
+            //*TODO: Test with zipcodes removed from Firebase
             //*TODO: Handle snapshot error.
           }
           if (snapshot.hasData) {
@@ -59,6 +74,7 @@ class ZipCode extends StatelessWidget {
                 );
               }).toList(),
               onChanged: (String newValueSelected) {
+                _updateState(newValueSelected);
                 _zipCodeValue = newValueSelected;
               },
               value: _zipCodeValue.isEmpty ? zipCodes[0] : _zipCodeValue,

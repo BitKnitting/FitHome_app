@@ -66,7 +66,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
       decoration: InputDecoration(
         hintText: widget.hintPhoneText,
         icon: Icon(
-          Icons.mail,
+          Icons.phone,
           color: Colors.grey,
         ),
         errorText: isValid() ? null : widget.invalidPhoneErrorText,
@@ -90,12 +90,10 @@ class TextEntryWidget extends StatefulWidget with Validators {
   @required
   final IconData icon;
   @required
-  final ValueKey valueKey;
   final bool obscureText;
   final validField = ValueNotifier(false);
 
-  TextEntryWidget(
-      {this.hint, this.icon, this.valueKey, this.obscureText = false});
+  TextEntryWidget({this.hint, this.icon, this.obscureText = false});
 
   @override
   _TextEntryWidgetState createState() => _TextEntryWidgetState();
@@ -113,7 +111,6 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
     return TextField(
       obscureText: widget.obscureText,
       controller: _textController,
-      key: widget.valueKey,
       maxLines: 1,
       keyboardType: TextInputType.text,
       autofocus: false,
@@ -141,16 +138,3 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
     });
   }
 }
-
-//********************************************************************* */
-// * Notify when a widget's entry is valid
-//********************************************************************* */
-// class EntryChangeNotifier {
-//   final _controller = StreamController<ValueKey>();
-//   void notify(ValueKey key) {
-//     _controller.sink.add(key);
-//   }
-//   bool isValid(ValueKey key) {
-//     return false;
-//   }
-// }
