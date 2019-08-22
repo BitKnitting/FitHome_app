@@ -1,6 +1,6 @@
 //?TBD:   textInputAction: TextInputAction.next... does not work on phone keyboard. The implication is
 //?the user can't use the keyboard next button to get to the next Textfield. For now not using phone keyboard.
-//*TODO: All the goo around submitting.
+//*TODO: Merge back with main.
 //********************************************************************** */
 //* start_training.dart
 //* UI for the Start Training step.
@@ -9,11 +9,13 @@
 
 import 'package:after_layout/after_layout.dart';
 import 'package:fithome_app/common_code/form_submit_button.dart';
-import 'package:fithome_app/launch_to_impact/install_monitor_page.dart';
 import 'package:fithome_app/launch_to_impact/zip_code_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:fithome_app/launch_to_impact/signin/validators.dart';
+import 'package:provider/provider.dart';
+
+import 'signin/auth_service.dart';
 
 class StartTrainingPage extends StatefulWidget with Validators {
   @override
@@ -27,11 +29,36 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   // afterFirstLayout gets called after the widgets have been built.
   // It is part of the AfterLayoutMixin.
   bool expand = false;
+  ZipCode zipPullDown = ZipCode();
+  bool isValidZip = false;
+  bool expandFillInText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    zipPullDown.zipCodeString.addListener(_zipCodeStringListener);
+  }
+
   @override
   void afterFirstLayout(BuildContext context) {
     setState(() {
-      expand = !expand;
+      expand = true;
     });
+  }
+
+  // One of the values within the zipcode pulldown was chosen
+  void _zipCodeStringListener() {
+    log.info('user chose zip code: ***>${zipPullDown.zipCodeString.value}<***');
+    if (widget.zipcodeValidator.isValid(zipPullDown.zipCodeString.value)) {
+      expand = false;
+      isValidZip = true;
+      _checkExpandText();
+    } else {
+      expand = true;
+      isValidZip = false;
+      _checkExpandText();
+    }
+    setState(() {});
   }
 
   final TextEditingController _emailController = TextEditingController();
@@ -55,6 +82,14 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   String get _address => _addressController.text;
   String get _password => _passwordController.text;
   String get _reEnterPassword => _reEnterPasswordController.text;
+  //********************************************************************** */
+  //* Update State
+  //********************************************************************** */
+  void _updateState() {
+    setState(() {
+      _checkExpandText();
+    });
+  }
   //********************************************************************** */
   //* Called when onEditingComplete callback = typically goes to next button.
   //********************************************************************** */
@@ -80,21 +115,30 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   }
 
   void _reEnterPasswordEditingComplete() {
-    FocusScope.of(context).requestFocus(_reEnterPasswordFocusNode);
+    _submit();
   }
 
   //********************************************************************** */
   //* Build the textfields that need to be filled in.
   //********************************************************************** */
   Widget _buildStartTrainingForm() {
-    bool isZipCodeChosen = false;
+    log.info('buildStartTrainingForm');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _ZipCodeText(isZipCodeChosen: isZipCodeChosen, expand: expand),
+        // Don't show if user has picked a valid zipcode from the pulldown.
+        // Show expanded text if this is the first time the page is displayed.
         Padding(
-          padding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
-          child: ZipCode(),
+          padding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+          child: _ZipCodeText(expand: expand),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+          child: zipPullDown,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+          child: _FillFormText(expand: expandFillInText),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
@@ -117,13 +161,10 @@ class _StartTrainingPageState extends State<StartTrainingPage>
           child: _buildPasswordTextField(),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 30),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 15),
           child: _buildReEnterPasswordTextField(),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
-          child: _buildSubmitButton(),
-        ),
+        _buildSubmitButton(),
       ],
     );
   }
@@ -132,13 +173,32 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   //* All the fields are valid.  Now we take the info on the form to the
   //* next step.
   //********************************************************************** */
-  void _submit() {
-    log.info('pressed join StartTraining button.');
-    // Create an account.
-    // Push the InstallMonitorPage
-    // fullscreenDialog: true is for iOS to load the page from the bottom.
-    Navigator.of(context).push(MaterialPageRoute(
-        fullscreenDialog: true, builder: (context) => InstallMonitorPage()));
+  void _submit() async {
+    log.info('pressed contact electrician button.');
+    final auth = Provider.of<AuthBase>(context);
+    Member member = await auth.createAccount(context, _email, _password);
+    if (member == null) {
+      log.info('Member is null.');
+      setState(() {});
+    }
+    if (member != null) {
+      String _monitor = await member.assignMonitor(context);
+      if (_monitor != null) {
+        Map userRecordJson = member.toJson(
+            address: _address,
+            name: _name,
+            phone: _phone,
+            email: _email,
+            monitor: _monitor);
+
+        member.createUserRecord(userRecordJson);
+
+        //*TODO: Go to set up electrician visit
+      } else {
+        log.info(
+            'Error - no monitors available. This should have been caught already by waitlist.');
+      }
+    }
   }
 
   //********************************************************************** */
@@ -153,6 +213,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
         icon: Icon(Icons.person, color: Colors.grey),
         labelText: 'Name',
         errorText: showErrorText ? widget.invalidTextfieldErrorText : null,
+        enabled: isValidZip == true,
       ),
       autocorrect: false,
       keyboardType: TextInputType.text,
@@ -174,6 +235,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
         icon: Icon(Icons.mail, color: Colors.grey),
         labelText: widget.hintEmailText,
         errorText: showErrorText ? widget.invalidEmailErrorText : null,
+        enabled: isValidZip == true,
       ),
       autocorrect: false,
       keyboardType: TextInputType.emailAddress,
@@ -195,6 +257,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
         icon: Icon(Icons.phone, color: Colors.grey),
         labelText: widget.hintPhoneText,
         errorText: showErrorText ? widget.invalidPhoneErrorText : null,
+        enabled: isValidZip == true,
       ),
       autocorrect: false,
       keyboardType: TextInputType.text,
@@ -216,6 +279,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
         icon: Icon(Icons.home, color: Colors.grey),
         labelText: 'Address',
         errorText: showErrorText ? widget.invalidTextfieldErrorText : null,
+        enabled: isValidZip == true,
       ),
       autocorrect: false,
       keyboardType: TextInputType.text,
@@ -229,15 +293,15 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   //* Build password
   //********************************************************************** */
   TextField _buildPasswordTextField() {
-    bool showErrorText = !widget.textfieldValidator.isValid(_password);
+    bool showErrorText = !widget.passwordValidator.isValid(_password);
     return TextField(
       controller: _passwordController,
       focusNode: _passwordFocusNode,
       decoration: InputDecoration(
         icon: Icon(Icons.lock, color: Colors.grey),
         labelText: 'Password',
-        errorText: showErrorText ? widget.invalidTextfieldErrorText : null,
-        //    enabled: _isLoading == false,
+        errorText: showErrorText ? widget.invalidPasswordErrorText : null,
+        enabled: isValidZip == true,
       ),
       obscureText: true,
       textInputAction: TextInputAction.next,
@@ -251,7 +315,10 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   //********************************************************************** */
   TextField _buildReEnterPasswordTextField() {
     String value = _password + ',' + _reEnterPassword;
-    bool showErrorText = !widget.reEnterPasswordValidator.isValid(value);
+    bool showErrorText = true;
+    if (_password.isNotEmpty || _reEnterPassword.isNotEmpty) {
+      showErrorText = !widget.reEnterPasswordValidator.isValid(value);
+    }
     return TextField(
       controller: _reEnterPasswordController,
       focusNode: _reEnterPasswordFocusNode,
@@ -259,7 +326,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
         icon: Icon(Icons.lock, color: Colors.grey),
         labelText: 'Re-enter Password',
         errorText: showErrorText ? widget.invalidReEnterPasswordText : null,
-        //    enabled: _isLoading == false,
+        enabled: isValidZip == true,
       ),
       obscureText: true,
       textInputAction: TextInputAction.done,
@@ -274,17 +341,16 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   FormSubmitButton _buildSubmitButton() {
     String valueForReEnterPasswordValidator =
         _password + ',' + _reEnterPassword;
-    bool _submitEnabled = widget.emailValidator.isValid(_email);
-    // &&
-    //     widget.textfieldValidator.isValid(_name) &&
-    //     widget.phoneValidator.isValid(_phone) &&
-    //     widget.textfieldValidator.isValid(_address) &&
-    //     widget.textfieldValidator.isValid(_password) &&
-    //     widget.reEnterPasswordValidator
-    //         .isValid(valueForReEnterPasswordValidator);
+    bool _submitEnabled = widget.emailValidator.isValid(_email) &&
+        widget.textfieldValidator.isValid(_name) &&
+        widget.phoneValidator.isValid(_phone) &&
+        widget.textfieldValidator.isValid(_address) &&
+        widget.passwordValidator.isValid(_password) &&
+        widget.reEnterPasswordValidator
+            .isValid(valueForReEnterPasswordValidator);
 
     return FormSubmitButton(
-      text: 'Start Training',
+      text: 'Schedule an Electrician',
       // The button is only active if the email is formatted correctly.
       onPressed: _submitEnabled ? _submit : null,
     );
@@ -305,44 +371,67 @@ class _StartTrainingPageState extends State<StartTrainingPage>
     );
   }
 
-  //********************************************************************** */
-  //* Update State
-  //********************************************************************** */
-  void _updateState() {
-    setState(() {});
+  _checkExpandText() {
+    if (_name.isNotEmpty ||
+        _email.isNotEmpty ||
+        _phone.isNotEmpty ||
+        _address.isNotEmpty ||
+        _password.isNotEmpty ||
+        _reEnterPassword.isNotEmpty && isValidZip) {
+      expandFillInText = false;
+    } else if (!isValidZip) {
+      expandFillInText = false;
+    } else {
+      expandFillInText = true;
+    }
   }
 }
 
 class _ZipCodeText extends StatelessWidget {
   const _ZipCodeText({
     Key key,
-    @required this.isZipCodeChosen,
     @required this.expand,
   }) : super(key: key);
 
-  final bool isZipCodeChosen;
   final bool expand;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-      child: Visibility(
-        visible: isZipCodeChosen ? false : true,
-        child: AnimatedDefaultTextStyle(
-          duration: const Duration(seconds: 1),
-          style: expand
-              ? TextStyle(
-                  fontSize: 30, color: Colors.red, fontWeight: FontWeight.bold)
-              : TextStyle(
-                  fontSize: 10,
-                  color: Colors.black,
-                  fontWeight: FontWeight.normal),
-          child: Text(
-            'Choose your Zip Code',
-            textAlign: TextAlign.center,
-          ),
-        ),
+    return AnimatedDefaultTextStyle(
+      duration: const Duration(seconds: 1),
+      style: expand
+          ? TextStyle(
+              fontSize: 30, color: Colors.red, fontWeight: FontWeight.bold)
+          : TextStyle(
+              fontSize: 10, color: Colors.grey, fontWeight: FontWeight.normal),
+      child: Text(
+        'Choose your Zipcode',
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class _FillFormText extends StatelessWidget {
+  const _FillFormText({
+    Key key,
+    @required this.expand,
+  }) : super(key: key);
+
+  final bool expand;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedDefaultTextStyle(
+      duration: const Duration(seconds: 1),
+      style: expand
+          ? TextStyle(
+              fontSize: 30, color: Colors.red, fontWeight: FontWeight.bold)
+          : TextStyle(
+              fontSize: 10, color: Colors.grey, fontWeight: FontWeight.normal),
+      child: Text(
+        'Fill in Fields',
+        textAlign: TextAlign.center,
       ),
     );
   }

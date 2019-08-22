@@ -35,4 +35,10 @@ class Prefs {
     }
     return false;
   }
+
+  Future<bool> clear() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool prefsCleared = await prefs.clear();
+    return (prefsCleared);
+  }
 }

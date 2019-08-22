@@ -15,7 +15,7 @@ class _WaitListPageState extends State<WaitListPage> {
 
   Widget _buildContent() {
     //*TODO: Do next steps after button is pressed (e.g.: add email to waitlist...)
-    //*TODO: enable button when all fields have been vaidated.
+  
     //*TODO: Get focus right with keyboard....test with keyboard.  Make sure focus and keyboard "DONE" button are what you want.
     bool _submitEnabled = false;
     return Column(

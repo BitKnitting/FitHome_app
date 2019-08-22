@@ -1,23 +1,80 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
 import 'package:fithome_app/common_code/prefs_service.dart';
 import 'package:fithome_app/common_code/globals.dart';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/services.dart';
+
+class AvailableMonitors {
+  Logger log = Logger('auth_service.dart');
+  // AvailableMonitors.fromJson(Map data) {
+  //   data.forEach((k, v) => print('$k: $v'));
+  //   print('hello');
+  // }
+  String getMonitor(Map data) {
+    // Go through monitors and find one that is available.
+    String monitor = '';
+    for (String key in data.keys) {
+      if (data[key] == true) {
+        // Found a free monitor.
+        monitor = key;
+        break;
+      }
+    }
+    log.info('Got monitor $monitor');
+    return monitor;
+  }
+
+  //**************************************************************************
+  //* Set the monitor's value to 'false' so it is no longer seen as available.
+  //**************************************************************************
+  void setUnavailable(String monitor) async {
+    try {
+      await FirebaseDatabase.instance
+          .reference()
+          .child('available_monitors')
+          .update({monitor: false});
+      log.info('updated $monitor availability to false in Firebase.');
+    } catch (e) {
+      log.info(
+          'Error: ${e.message} On attempting to set monitor $monitor to false in Firebase.');
+      return;
+    }
+  }
+}
 
 // By using the Member class, our abstract AuthBase could be built from other authentication dbs.
 class Member {
   Member({this.uid}) {
     _saveUid(this.uid);
   }
+  Map<String, dynamic> toJson(
+          {String address,
+          String name,
+          String phone,
+          String email,
+          String monitor}) =>
+      {
+        "address": address,
+        "email": email,
+        "monitor": monitor,
+        "name": name,
+        "phone": phone,
+        "status": "start",
+        "start_timestamp": {".sv": "timestamp"},
+      };
   final String uid;
   // From https://dart.dev/guides/language/effective-dart/usage
   // If you make a parameter optional but don’t give it a default value,
   // the language implicitly uses null as the default
   String _email;
   String _password;
+
+  Logger log = Logger('auth_service.dart');
   //**************************************************************************
   // email property
   //**************************************************************************
@@ -52,6 +109,68 @@ class Member {
   Future<void> _saveUid(String uid) async {
     await Prefs().setKey(uidKey, uid);
   }
+
+  //**************************************************************************
+  // clear properties from local store.
+  //**************************************************************************
+  Future<bool> clear() async {
+    return await Prefs().clear();
+  }
+
+  //**************************************************************************
+  // Member has been created, so assign a monitor..
+  //**************************************************************************
+  Future<String> assignMonitor(BuildContext context) async {
+    //Get the list of available_monitors.
+    try {
+      DataSnapshot availableMonitors = await FirebaseDatabase.instance
+          .reference()
+          .child('available_monitors')
+          .once();
+      AvailableMonitors availableMonitor = AvailableMonitors();
+      String monitor = availableMonitor.getMonitor(availableMonitors.value);
+      if (monitor.isEmpty) {
+        return null;
+      }
+      availableMonitor.setUnavailable(monitor);
+      //* Add -<mmddyyyy> to monitor name.
+      DateTime now = DateTime.now();
+      String formattedDate = DateFormat('MM-dd-yyy').format(now);
+      monitor = monitor + '-' + formattedDate;
+      return monitor;
+    } catch (e) {
+      log.info('Error: ${e.message} .');
+      PlatformAlertDialog(
+        title: 'Data Access Error!',
+        content: '${e.message}',
+        defaultActionText: 'OK',
+      ).show(context);
+      log.info(
+          'Error trying to read the available monitors.  Error: ${e.message}');
+      //*TODO: Handle when cannot get to the available_monitors list.
+      return null;
+    }
+    //Go through the list and find one that has true as it's value
+    //update the monitor to have false in it's value.
+    //Create a monitor name that is "<monitor name>-MMDDYYYY"
+    //Store monitor name in user record.
+  }
+
+  void createUserRecord(Map userRecordJson) async {
+  // For the member that has the uid, i'm pushing the uid key.
+  // Note: I had trouble finding great documentation for Firebase RT.
+  // One aspect I found was, push() generates a document id.  
+  // But set does not. I use set because I'm using the uid as the unique id.
+    try {
+      await FirebaseDatabase.instance
+          .reference()
+          .child('members')
+          .child(uid)
+          .set(userRecordJson);
+    } on PlatformException catch (e) {
+      log.info('Error: ${e.message} .');
+    }
+  }
 }
 
 //**************************************************************************
@@ -60,6 +179,8 @@ class Member {
 
 abstract class AuthBase {
   Future<Member> signIn(BuildContext context, {String email, String password});
+  Future<Member> createAccount(
+      BuildContext context, String email, String password);
 }
 
 class Auth implements AuthBase {
@@ -85,9 +206,9 @@ class Auth implements AuthBase {
     // sign in with these.  If sign in fails, send back a null member.  If it succeeds,
     // We'll store the email and password after a successful sign-in
     if ((email == null) || (password == null)) {
-      log.info('email and passwordwere not passed in.');
+      log.info('Email and password were not passed in.');
       if (await _isCredsInLocalStore()) {
-        log.info('email and password are in local store.');
+        log.info('Email and password are in local store.');
         member = Member();
         // The Member get for email and password will retrieve values from shared preferences.
         _email = await member.email;
@@ -95,7 +216,7 @@ class Auth implements AuthBase {
         // If we don't have the email and password and they are not in Shared preferences, return
         // null for the member instance.
       } else {
-        log.info('email and password are not in local store, member is null.');
+        log.info('Email and password are not in local store, member is null.');
         return null;
       }
       // An email and password were passed in.
@@ -112,7 +233,8 @@ class Auth implements AuthBase {
       log.info('Sign in failed.  Error: $e');
       if (e.code == 'ERROR_USER_NOT_FOUND') {
         log.info(
-            'There is an email and password stored locally, but we cannot log into the account db with them, member is null.');
+            'There is an email and password stored locally, but we cannot log in with them.  Deleting member info from shared preferences.  Member is null.');
+        member.clear();
         return null;
       } else {
         log.info('Error: ${e.message}, member is null.');
@@ -151,6 +273,36 @@ class Auth implements AuthBase {
     }
     log.info('able to convert Firebase uid to member');
     return Member(uid: user.uid);
+  }
+
+  //**************************************************************************
+  // _createMemberAccount
+  // return a member instance based on the logged in user's Firebase User ID.
+  //**************************************************************************
+  Future<Member> createAccount(
+      BuildContext context, String email, String password) async {
+    FirebaseUser user;
+    try {
+      user = await _firebaseAuth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      // Store email and password in shared preferences.
+      log.info(
+          'We are able to create the account.  Storing info in Shared Preferences.');
+      Member().email = email;
+      Member().password = password;
+      return _memberFromFirebase(user);
+    } on PlatformException catch (e) {
+      log.info('Error: ${e.message}.  Email: $email Password $password.');
+      final memberErrorDlg = await PlatformAlertDialog(
+        title: 'Create Member Error!',
+        content: '${e.message}',
+        defaultActionText: 'OK',
+      ).show(context);
+      if (memberErrorDlg == true) {
+        return null;
+      }
+    }
+    return null;
   }
 
   //**************************************************************************

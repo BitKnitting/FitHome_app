@@ -31,6 +31,37 @@ class PhoneValidate implements StringValidator {
   }
 }
 
+class ZipcodeValidate implements StringValidator {
+  static Pattern pattern = r'^[0-9]{5}(?:-[0-9]{4})?$';
+  RegExp regex = RegExp(pattern);
+  bool isValid(String value) {
+    if (regex.hasMatch(value)) {
+      return true;
+    }
+    return false;
+  }
+}
+class TicketValidate implements StringValidator {
+  static Pattern pattern = r'^[a-zA-Z0-9]{6}?$';
+  RegExp regex = RegExp(pattern);
+  bool isValid(String value) {
+    if (regex.hasMatch(value)) {
+      return true;
+    }
+    return false;
+  }
+}
+class PasswordValidate implements StringValidator {
+  static Pattern pattern = r'^[a-zA-Z0-9]{6,}?$';
+  RegExp regex = RegExp(pattern);
+  bool isValid(String value) {
+    if (regex.hasMatch(value)) {
+      return true;
+    }
+    return false;
+  }
+}
+
 class ReEnterPasswordValidate implements StringValidator {
 // We campare the password to the re-entered password.  However, our
 // validators just take in a string up to this point. So we assume
@@ -53,11 +84,17 @@ class Validators {
   final StringValidator textfieldValidator = NonEmptyStringValidator();
   final StringValidator phoneValidator = PhoneValidate();
   final StringValidator reEnterPasswordValidator = ReEnterPasswordValidate();
-  final String invalidReEnterPasswordText = 'Must be the same as password.';
+  final StringValidator zipcodeValidator = ZipcodeValidate();
+  final StringValidator ticketValidator = TicketValidate();
+  final StringValidator passwordValidator = PasswordValidate();
 
+  final String invalidReEnterPasswordText = 'Must be the same as password.';
+  final String invalidZipcodeText = "Not a valid zipcode.";
+  final String invalidTicketErrorText = "Tickets are 6 characters or numbers.";
   final String invalidEmailErrorText = 'Not a valid email name.';
   final String invalidTextfieldErrorText = 'Can\'t be empty.';
+  final String invalidPasswordErrorText = 'Passwords must be at least 6 characters.';
   final String invalidPhoneErrorText = 'Not a valid phone number.';
-  final String hintPhoneText = 'Mobile phone number';
+  final String hintPhoneText = 'SMS number';
   final String hintEmailText = 'Email';
 }
