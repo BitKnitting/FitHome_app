@@ -1,7 +1,7 @@
+import 'package:fithome_app/launch_to_impact/install_monitor/appts_%20model.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
-import 'launch_to_impact/launch_check.dart';
 import 'launch_to_impact/launch_page.dart';
 import 'launch_to_impact/signin/auth_service.dart';
 
@@ -17,14 +17,20 @@ void main() {
 // *************************************************************************************
 // Starts with login routing.
 class MyApp extends StatelessWidget {
-  final LaunchCheck launchCheck = LaunchCheck();
   @override
   Widget build(BuildContext context) {
     String title = 'FitHome';
     // We will provide the AuthBase login service.
     // The syntax for Provider requires the builder and child params.
-    return Provider<AuthBase>(
-      builder: (context) => Auth(),
+    return MultiProvider(
+      providers: [
+        Provider<AuthBase>(
+          builder: (context) => Auth(),
+        ),
+        Provider<Appointments>(
+          builder: (context) => Appointments(),
+        )
+      ],
       child: MaterialApp(
           title: title,
           theme: ThemeData(
@@ -38,7 +44,7 @@ class MyApp extends StatelessWidget {
 // *************************************************************************************
 // Code to set up logger.
 void _initLogger() {
-  Logger.root.level = Level.ALL; // i.e.: INFO.
+  Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((LogRecord rec) {
     final List<Frame> frames = Trace.current().frames;
     try {

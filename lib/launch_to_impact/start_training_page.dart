@@ -1,6 +1,6 @@
 //?TBD:   textInputAction: TextInputAction.next... does not work on phone keyboard. The implication is
 //?the user can't use the keyboard next button to get to the next Textfield. For now not using phone keyboard.
-//*TODO: Merge back with main.
+
 //********************************************************************** */
 //* start_training.dart
 //* UI for the Start Training step.
@@ -15,6 +15,7 @@ import 'package:logging/logging.dart';
 import 'package:fithome_app/launch_to_impact/signin/validators.dart';
 import 'package:provider/provider.dart';
 
+import 'install_monitor/install_monitor_page.dart';
 import 'signin/auth_service.dart';
 
 class StartTrainingPage extends StatefulWidget with Validators {
@@ -122,7 +123,6 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   //* Build the textfields that need to be filled in.
   //********************************************************************** */
   Widget _buildStartTrainingForm() {
-    log.info('buildStartTrainingForm');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -191,12 +191,18 @@ class _StartTrainingPageState extends State<StartTrainingPage>
             email: _email,
             monitor: _monitor);
 
-        member.createUserRecord(userRecordJson);
+        bool recordCreated = await member.createUserRecord(userRecordJson);
 
-        //*TODO: Go to set up electrician visit
+        if (recordCreated) {
+          log.info('Member record created.');
+          // Pop the start training page.
+          // Push the schedule electrician page.
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (context) => InstallMonitorPage()));
+        }
       } else {
-        log.info(
-            'Error - no monitors available. This should have been caught already by waitlist.');
+        log.info('Member record not created.');
       }
     }
   }

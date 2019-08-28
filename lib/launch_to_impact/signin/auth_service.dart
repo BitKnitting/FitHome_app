@@ -9,6 +9,38 @@ import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/services.dart';
 
+class InstallTimes {
+  Map<DateTime, List> _appts = Map<DateTime, List>();
+  //**************************************************************************
+  // The Map of appointments
+  //**************************************************************************
+  Future<Map<DateTime, List>> getAppts() async {
+    print('appts: $_appts, length: ${_appts.length}');
+    // Have we already gotten the appointments?
+    if (_appts.length > 0) {
+      return _appts;
+    }
+    DateTime dateTime = DateTime.now();
+    await Future.delayed(const Duration(seconds: 2), () {
+      _appts = {
+        dateTime.add(Duration(days: 2)): ['10:30', '12:30', '13:00'],
+        dateTime.add(Duration(days: 20)): ['9:15', '12:15'],
+      };
+    });
+    return _appts;
+  }
+
+  get appts async {
+    // If the email string is either empty or null, check shared preferences
+    // If not, we have already retrieved it (or it does not exist).
+    if (_appts?.isEmpty ?? true) {
+      return await getAppts();
+    }
+    return _appts;
+  }
+}
+
+//*************************************************************************** */
 class AvailableMonitors {
   Logger log = Logger('auth_service.dart');
   // AvailableMonitors.fromJson(Map data) {
@@ -25,7 +57,7 @@ class AvailableMonitors {
         break;
       }
     }
-    log.info('Got monitor $monitor');
+    log.info('Got monitor $monitor.');
     return monitor;
   }
 
@@ -38,10 +70,10 @@ class AvailableMonitors {
           .reference()
           .child('available_monitors')
           .update({monitor: false});
-      log.info('updated $monitor availability to false in Firebase.');
+      log.info('Updated $monitor availability to false in Firebase.');
     } catch (e) {
       log.info(
-          'Error: ${e.message} On attempting to set monitor $monitor to false in Firebase.');
+          '!!!Error: ${e.message} On attempting to set monitor $monitor to false in Firebase.!!!');
       return;
     }
   }
@@ -119,6 +151,7 @@ class Member {
 
   //**************************************************************************
   // Member has been created, so assign a monitor..
+  //*TODO: Send text message to FitHome member services for them to label and config the monitor.
   //**************************************************************************
   Future<String> assignMonitor(BuildContext context) async {
     //Get the list of available_monitors.
@@ -135,7 +168,7 @@ class Member {
       availableMonitor.setUnavailable(monitor);
       //* Add -<mmddyyyy> to monitor name.
       DateTime now = DateTime.now();
-      String formattedDate = DateFormat('MM-dd-yyy').format(now);
+      String formattedDate = DateFormat('MMddyyyy').format(now);
       monitor = monitor + '-' + formattedDate;
       return monitor;
     } catch (e) {
@@ -156,25 +189,28 @@ class Member {
     //Store monitor name in user record.
   }
 
-  void createUserRecord(Map userRecordJson) async {
-  // For the member that has the uid, i'm pushing the uid key.
-  // Note: I had trouble finding great documentation for Firebase RT.
-  // One aspect I found was, push() generates a document id.  
-  // But set does not. I use set because I'm using the uid as the unique id.
+  Future<bool> createUserRecord(Map userRecordJson) async {
+    // For the member that has the uid, i'm pushing the uid key.
+    // Note: I had trouble finding great documentation for Firebase RT.
+    // One aspect I found was, push() generates a document id.
+    // But set does not. I use set because I'm using the uid as the unique id.
     try {
       await FirebaseDatabase.instance
           .reference()
           .child('members')
           .child(uid)
           .set(userRecordJson);
-    } on PlatformException catch (e) {
+    } catch (e) {
       log.info('Error: ${e.message} .');
+      return false;
     }
+    return true;
   }
 }
 
 //**************************************************************************
 // Authentication Provider.
+//*TODO: Probably refactor into a membership provider.
 //**************************************************************************
 
 abstract class AuthBase {
@@ -268,15 +304,15 @@ class Auth implements AuthBase {
   //**************************************************************************
   Member _memberFromFirebase(FirebaseUser user) {
     if (user == null) {
-      log.info('user is null');
+      log.info('The user is null.');
       return null;
     }
-    log.info('able to convert Firebase uid to member');
+    log.info('We are able to convert Firebase uid to member.');
     return Member(uid: user.uid);
   }
 
   //**************************************************************************
-  // _createMemberAccount
+  // createMemberAccount
   // return a member instance based on the logged in user's Firebase User ID.
   //**************************************************************************
   Future<Member> createAccount(

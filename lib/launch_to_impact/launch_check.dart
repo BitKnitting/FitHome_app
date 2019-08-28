@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
+import 'install_monitor/appts_ model.dart';
 import 'signin/auth_service.dart';
 
 enum UserState { unknown, waitlist, start_training, member }
@@ -44,6 +45,7 @@ class LaunchCheck {
   }
 
   Future<UserState> checkForMembership(BuildContext context) async {
+    final appts = Provider.of<Appointments>(context);
     final auth = Provider.of<AuthBase>(context);
     log.info('Checking for membership type.');
     if (!await isWifi()) {
@@ -54,6 +56,7 @@ class LaunchCheck {
     if (member == null) {
       // User is not a member.
       // Check to see if there are available monitors.
+      //*TODO: available monitors check is dummied out for now.
       bool availableMonitors = await _checkMonitorAvailability(member);
       // if there is not a monitor available, go to the waitlist page.
       if (!availableMonitors) {
@@ -61,9 +64,13 @@ class LaunchCheck {
         return UserState.waitlist;
       } else {
         // This means there is a monitor available and the use is not a member.  Go to the start training page.
-        log.info('A monitor is available.  Start training.');
-        return UserState.start_training;
+        log.info('A monitor is available.');
       }
+      // Check if there are available appointment times for an electrician to install the monitor.
+      await appts.getInstallTimes();
+      log.info(
+          "Available dates/times for electrician to install monitor: ${appts.installTimes}");
+      return UserState.start_training;
     } else {
       // The user is already a member - load the impact page.
       await Future.delayed(Duration(seconds: 2));
