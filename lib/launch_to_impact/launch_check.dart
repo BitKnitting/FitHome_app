@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
-import 'install_monitor/appts_ model.dart';
+import 'install_monitor/appts_model.dart';
+import 'install_monitor/monitors_model.dart';
 import 'signin/auth_service.dart';
 
 enum UserState { unknown, waitlist, start_training, member }
@@ -13,8 +14,10 @@ enum UserState { unknown, waitlist, start_training, member }
 class LaunchCheck {
   final Logger log = Logger('launch_check.dart');
 
-//
+//****************************************** */
+//*If there is no wifi, the app doesn't continue
 //*Returns True if the app can access wifi.
+//****************************************** */
   Future<bool> isWifi() async {
     try {
       final result = await InternetAddress.lookup('google.com');
@@ -29,6 +32,10 @@ class LaunchCheck {
     return true;
   }
 
+//****************************************** */
+//*Perhaps the homeowner can connect their phone to wifi.  If so,
+//*we provide a way to try to connect.
+//****************************************** */
   Future<void> askUserToFixWifi(BuildContext context) async {
     log.info('askUserToFixWifi');
     final tryAgain = await PlatformAlertDialog(
@@ -44,44 +51,42 @@ class LaunchCheck {
     }
   }
 
+//****************************************** */
+//*Here is where we walk through whether the homeowner is
+//*already a member or not.  If not, we start the process of
+//*getting homeowner info and setting up an install time for an
+//*electrician to come out and install a monitor.
+//****************************************** */
   Future<UserState> checkForMembership(BuildContext context) async {
     final appts = Provider.of<Appointments>(context);
     final auth = Provider.of<AuthBase>(context);
-    log.info('Checking for membership type.');
+    final monitors = Provider.of<Monitors>(context);
     if (!await isWifi()) {
       await askUserToFixWifi(context);
     }
     log.info('We have access to wifi.  Checking if user is already a member.');
-    Member member = await auth.signIn(context);
-    if (member == null) {
-      // User is not a member.
+    String _memberUid = await auth.signIn(context);
+    if (_memberUid == null) {
+      log.info('Homeowner does not have an account.');
+      //* Homeowner is not a member yet.  Let's see what the homeowner's next steps
+      //* are to become a member.  If there aren't any monitors available, then we
+      //* know to take the homeowner to the waitlist page.
       // Check to see if there are available monitors.
-      //*TODO: available monitors check is dummied out for now.
-      bool availableMonitors = await _checkMonitorAvailability(member);
+
+      bool availableMonitors = await monitors.checkAvailability();
       // if there is not a monitor available, go to the waitlist page.
       if (!availableMonitors) {
-        log.info('No monitor is available.  Check about waitlist.');
+        log.info('No monitor is available.  Sending to waitlist.');
         return UserState.waitlist;
       } else {
         // This means there is a monitor available and the use is not a member.  Go to the start training page.
         log.info('A monitor is available.');
       }
-      // Check if there are available appointment times for an electrician to install the monitor.
-      await appts.getInstallTimes();
-      log.info(
-          "Available dates/times for electrician to install monitor: ${appts.installTimes}");
       return UserState.start_training;
     } else {
-      // The user is already a member - load the impact page.
-      await Future.delayed(Duration(seconds: 2));
+//* The user is already a member.
       log.info('The user can log in, already a member.');
       return UserState.member;
     }
-  }
-
-  Future<bool> _checkMonitorAvailability(Member member) async {
-    // The member is signed in, so access the Firebase RT available_monitors node...
-
-    return true;
   }
 }

@@ -30,6 +30,10 @@ dependencies:
  
   intl: ^0.15.8
   table_calendar: ^2.0.1
+  charts_flutter: ^0.8.0
+  transparent_image: ^1.0.0
+  percent_indicator: ^2.1.1+1
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -52,7 +56,27 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/impactImages/414x736/money_1.jpeg
+    - assets/impactImages/414x736/money_2.jpeg
+    - assets/impactImages/414x736/money_3.jpeg
+    - assets/impactImages/414x736/money_4.jpeg
+    - assets/impactImages/414x736/money_5.jpeg
+    - assets/impactImages/414x736/money_6.jpeg
+    - assets/impactImages/414x736/money_7.jpeg
+    - assets/impactImages/414x736/money_8.jpeg
+    - assets/impactImages/414x736/money_9.jpeg
+    - assets/impactImages/414x736/money_10.jpeg
+    - assets/impactImages/414x736/oil_1.jpeg
+    - assets/impactImages/414x736/oil_2.jpeg
+    - assets/impactImages/414x736/oil_3.jpeg
+    - assets/impactImages/414x736/oil_4.jpeg
+    - assets/impactImages/414x736/oil_5.jpeg
+    - assets/misc/female-electrician.png
+    - assets/misc/histogram.gif
+    - assets/impactImages/icons/money_icon.png
+    - assets/impactImages/icons/tree_icon.png
+    - assets/impactImages/icons/oil_icon.png
   #  - images/a_dot_burr.jpeg
   #  - images/a_dot_ham.jpeg
 

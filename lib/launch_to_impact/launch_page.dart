@@ -1,3 +1,4 @@
+
 import 'package:fithome_app/launch_to_impact/launch_check.dart';
 import 'package:fithome_app/launch_to_impact/start_training_page.dart';
 import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
@@ -15,7 +16,7 @@ class LaunchPage extends StatelessWidget {
             appBar: AppBar(
               title: Text('FitHome'),
               elevation: 5.0,
-            ),  
+            ),
             //resizeToAvoidBottomInset: true,
             body: FutureBuilder(
                 future: launchCheck.checkForMembership(context),

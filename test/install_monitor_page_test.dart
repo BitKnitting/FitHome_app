@@ -5,7 +5,7 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:fithome_app/launch_to_impact/install_monitor/appts_%20model.dart';
+import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/install_monitor_page.dart';
 import 'package:fithome_app/launch_to_impact/signin/auth_service.dart';
 import 'package:flutter/material.dart';

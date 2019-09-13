@@ -16,6 +16,8 @@ import 'package:fithome_app/launch_to_impact/signin/validators.dart';
 import 'package:provider/provider.dart';
 
 import 'install_monitor/install_monitor_page.dart';
+import 'install_monitor/monitors_model.dart';
+import 'member_model.dart';
 import 'signin/auth_service.dart';
 
 class StartTrainingPage extends StatefulWidget with Validators {
@@ -33,6 +35,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   ZipCode zipPullDown = ZipCode();
   bool isValidZip = false;
   bool expandFillInText = false;
+  String _zipCode = '';
 
   @override
   void initState() {
@@ -51,6 +54,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   void _zipCodeStringListener() {
     log.info('user chose zip code: ***>${zipPullDown.zipCodeString.value}<***');
     if (widget.zipcodeValidator.isValid(zipPullDown.zipCodeString.value)) {
+      _zipCode = zipPullDown.zipCodeString.value;
       expand = false;
       isValidZip = true;
       _checkExpandText();
@@ -174,36 +178,29 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   //* next step.
   //********************************************************************** */
   void _submit() async {
+    final monitors = Provider.of<Monitors>(context);
     log.info('pressed contact electrician button.');
+    // The homeowner is not a member yet.  Create an email account in Firebase.
     final auth = Provider.of<AuthBase>(context);
-    Member member = await auth.createAccount(context, _email, _password);
-    if (member == null) {
-      log.info('Member is null.');
+    final member = Provider.of<Member>(context);
+    await auth.createAccount(context, _email, _password);
+    if (member.id == null) {
+      log.severe(
+          '!!!Error: Just finished gathering all the homeowner info but could not create an account in firebase with the email and password passed in.');
       setState(() {});
+      return;
     }
-    if (member != null) {
-      String _monitor = await member.assignMonitor(context);
-      if (_monitor != null) {
-        Map userRecordJson = member.toJson(
-            address: _address,
-            name: _name,
-            phone: _phone,
-            email: _email,
-            monitor: _monitor);
+    String monitor = await monitors.makeMonitorName();
+    // Each member has an associated node within the Firebase members node.  The node name is the member's uid, which is created when the Firebase account is created.
 
-        bool recordCreated = await member.createUserRecord(userRecordJson);
+    bool recordCreated = await member.createRecord(
+        name: _name, address: _address, zip: _zipCode, phone: _phone, monitor: monitor);
 
-        if (recordCreated) {
-          log.info('Member record created.');
-          // Pop the start training page.
-          // Push the schedule electrician page.
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-              fullscreenDialog: true,
-              builder: (context) => InstallMonitorPage()));
-        }
-      } else {
-        log.info('Member record not created.');
-      }
+    if (recordCreated) {
+      log.info('Member record created.');
+      // Replace the startTrainingPage with the InstallMonitorPage.
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          fullscreenDialog: true, builder: (context) => InstallMonitorPage()));
     }
   }
 

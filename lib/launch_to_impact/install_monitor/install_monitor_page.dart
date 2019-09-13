@@ -1,10 +1,13 @@
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
-import 'package:fithome_app/launch_to_impact/install_monitor/appts_%20model.dart';
+
+import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
+
+import '../../navigation_page.dart';
 
 class InstallMonitorPage extends StatefulWidget {
   @override
@@ -52,10 +55,8 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
       body: Column(
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
-
-          _buildTableCalendar(context),
+          Expanded(child: _buildTableCalendar(context)),
           const SizedBox(height: 8.0),
-
           Expanded(child: _buildEventList()),
         ],
       ),
@@ -65,25 +66,61 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
   // Simple TableCalendar configuration (using Styles)
   Widget _buildTableCalendar(BuildContext context) {
     final appts = Provider.of<Appointments>(context);
-
-    return TableCalendar(
-      calendarController: _calendarController,
-      events: appts.installTimes,
-      startingDayOfWeek: StartingDayOfWeek.sunday,
-      calendarStyle: CalendarStyle(
-        selectedColor: Colors.deepOrange[400],
-        todayColor: Colors.purple[200],
-        markersColor: Colors.brown[700],
-        outsideDaysVisible: false,
-      ),
-      headerStyle: HeaderStyle(
-        // We'll show the month and chevron, but not the button.
-        formatButtonVisible: false,
-      ),
-      onDaySelected: _onDaySelected,
-      onVisibleDaysChanged: _onVisibleDaysChanged,
+    return FutureBuilder(
+      // The Table Calendar gets rebuilt many times.  However, the first time we need the install times.
+      future: appts.getCalendarDateTimes(context),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasData) {
+            return TableCalendar(
+              calendarController: _calendarController,
+              events: snapshot.data,
+              startingDayOfWeek: StartingDayOfWeek.sunday,
+              calendarStyle: CalendarStyle(
+                selectedColor: Colors.deepOrange[400],
+                todayColor: Colors.purple[200],
+                markersColor: Colors.brown[700],
+                outsideDaysVisible: false,
+              ),
+              headerStyle: HeaderStyle(
+                // We'll show the month and chevron, but not the button.
+                formatButtonVisible: false,
+              ),
+              onDaySelected: _onDaySelected,
+              onVisibleDaysChanged: _onVisibleDaysChanged,
+            );
+          } else {
+            log.severe(
+                '!!! Error - there are no available monitor installation appointments.  However checks were made previously.');
+          }
+        } else {
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+      },
     );
   }
+
+  // return TableCalendar(
+  //   calendarController: _calendarController,
+  //   events: appts.installTimes,
+  //   startingDayOfWeek: StartingDayOfWeek.sunday,
+  //   calendarStyle: CalendarStyle(
+  //     selectedColor: Colors.deepOrange[400],
+  //     todayColor: Colors.purple[200],
+  //     markersColor: Colors.brown[700],
+  //     outsideDaysVisible: false,
+  //   ),
+  //   headerStyle: HeaderStyle(
+  //     // We'll show the month and chevron, but not the button.
+  //     formatButtonVisible: false,
+  //   ),
+  //   onDaySelected: _onDaySelected,
+  //   onVisibleDaysChanged: _onVisibleDaysChanged,
+  // );
 
   Widget _buildEventList() {
     return ListView(
@@ -98,7 +135,7 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
                 child: ListTile(
                     title: Text(event.toString()),
                     onTap: () {
-                      _eventTapped(context,event);
+                      _eventTapped(context, event);
                     }),
               ))
           .toList(),
@@ -109,21 +146,34 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
   //* User has tapped on one of the available appointments.
   //********************************************************************** */
   void _eventTapped(BuildContext context, dynamic event) async {
-     final appts = Provider.of<Appointments>(context);
+    print(
+        '_selectedDay type: ${_selectedDay.runtimeType}  value: $_selectedDay');
+    print('Event type: ${event.runtimeType}  value: $event');
+    final appts = Provider.of<Appointments>(context);
     print('$event tapped');
     String dateStr = DateFormat.MMMMEEEEd().format(_selectedDay);
-    print(dateStr);
     bool scheduleAppointment = await PlatformAlertDialog(
       title: '$dateStr  $event',
       content: 'Schedule appointment?',
       defaultActionText: 'OK',
       cancelActionText: 'CANCEL',
     ).show(context);
-    print(scheduleAppointment);
+
     if (scheduleAppointment) {
-      // Update database record.
-      if (await appts.setAppt(_selectedDay, event)) {}
-      //*TODO: The backend will send a text/alert (hopefully?)
+      log.info(
+          'Member chose to schedule appointment'); //   // Update database record.
+      if (await appts.setAppt(context, _selectedDay, event)) {
+        log.info(
+            'appointment has been scheduled for day: $_selectedDay and time: $event');
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            fullscreenDialog: true, builder: (context) => NavigationPage()));
+        //*TODO: pop the installMonitorPage
+        //*TODO: push the page showing waiting for monitor to be installed.
+      } else {
+        //*TODO: Error trying to set up monitor install appointment... need UI and error handling to member services.
+        log.severe(
+            '!!! Could not set appointment for day: $_selectedDay and time: $event');
+      }
     }
   }
 }
