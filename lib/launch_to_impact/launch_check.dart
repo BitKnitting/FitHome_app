@@ -58,7 +58,6 @@ class LaunchCheck {
 //*electrician to come out and install a monitor.
 //****************************************** */
   Future<UserState> checkForMembership(BuildContext context) async {
-    final appts = Provider.of<Appointments>(context);
     final auth = Provider.of<AuthBase>(context);
     final monitors = Provider.of<Monitors>(context);
     if (!await isWifi()) {

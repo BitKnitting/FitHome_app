@@ -26,7 +26,7 @@ class Auth implements AuthBase {
 
   //**************************************************************************
   // signIn
-  // returns either a Member instance or null if couldn't sign in.
+  /// returns either a Member instance or null if couldn't sign in.
   //**************************************************************************
   Future<String> signIn(BuildContext context,
       {String email, String password}) async {
@@ -34,39 +34,41 @@ class Auth implements AuthBase {
     String _email;
     String _password;
     Member member;
-
-    // If email and password have not been passed in, Shared Prefs is checked to
-    // see if they are stored there.  If they are, use these.  If they are not,
-    // return a null member.
-    // If email and password have been passed in, don't use Shared Prefs.  Try to
-    // sign in with these.  If sign in fails, send back a null member.  If it succeeds,
-    // We'll store the email and password after a successful sign-in
+// The call to signIn can be made with or without the email and password.
+// It the email and password were not passed in, we'll see if the email
+// and password have been stored locally.
     if ((email == null) || (password == null)) {
       log.info('Email and password were not passed in.');
       if (await _isCredsInLocalStore()) {
         log.info('Email and password are in local store.');
+        // The local store does contain member info.  The member info it
+        // should contain includes the email, password, and member ID.  The
+        // member ID is the Firebase account id for this member.
+        // Let's get these values.
         member = Member();
-
-        /// If there are any properties stored in Prefs(), load them up.
         await member.getValues();
-        // The Member get for email and password will retrieve values from shared preferences.
+        // We need to check if these values will work with Firebases's signinwithemail.
+        // Neither the email nor the password can be null.
+        // If we have non null values for the email and password, we'll move on to
+        // signing into Firebase.
         _email = member.email;
         _password = member.password;
         if (_email == null || _password == null) {
           log.info(
-              'The local store does not have the correct email and password info to log in.');
+              'The email $_email or the password $_password is null in the local store.  Both have to be non-null.');
           member.clear();
           return null;
-        } else {
-          log.info(
-              'Email and password are not in local store, member is null.');
-          return null;
         }
-        // An email and password were passed in.
+        // The email and / or password are not in the local store.  We can't login.
       } else {
-        _email = email;
-        _password = password;
+        log.info('Email and password are not in local store, member is null.');
+        return null;
       }
+    }
+    // Both the email and password were passed in.  We'll try to sign into Firebase.
+    else {
+      _email = email;
+      _password = password;
     }
     // We've already returned if there are no credentials, so try to sign in.
 
@@ -75,6 +77,9 @@ class Auth implements AuthBase {
           email: _email, password: _password);
     } on PlatformException catch (e) {
       log.info('Sign in failed.  Error: $e');
+      // We check ERROR_USER_NOT_FOUND because the email and password in the local store may no longer be connected to a Firebase Account.  If this is the case,
+      // we go back to the state where we don't have a way to log the homeowner in.  This means the homeowner needs to fill out the StartTrainingPage so that
+      // a new email and password can be stored as well as a Firebase account created.
       if (e.code == 'ERROR_USER_NOT_FOUND') {
         log.info(
             'There is an email and password stored locally, but we cannot log in with them.  Deleting member info from shared preferences.  Member is null.');
@@ -123,7 +128,8 @@ class Auth implements AuthBase {
       member.email = email;
       member.password = password;
       await member.saveUid(user.uid);
-      log.info('New member id: ${member.id}');
+      member.getValues();
+      log.info('New email: ${member.email}.  New password: ${member.password}. New member id: ${member.id}');
       return user.uid;
     } on PlatformException catch (e) {
       log.severe('Error: ${e.message}.  Email: $email Password $password.');

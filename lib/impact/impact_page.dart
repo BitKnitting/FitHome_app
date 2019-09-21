@@ -11,19 +11,20 @@ import 'dart:ui';
 
 import 'package:fithome_app/common_code/form_submit_button.dart';
 import 'package:fithome_app/common_code/globals.dart';
+import 'package:fithome_app/common_code/platform_alert_dialog.dart';
 import 'package:fithome_app/impact/countdown_timer/countdown_timer.dart';
 import 'package:fithome_app/impact/impact_stream.dart';
+import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/monitors_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart' as prefix0;
+import 'package:intl/intl.dart';
+
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 import 'energy_plot/energy_plot.dart';
 import 'impact_content.dart';
-
-enum MemberState { unknown, waiting, baseline, active }
 
 class ImpactPage extends StatefulWidget {
   @override
@@ -32,20 +33,16 @@ class ImpactPage extends StatefulWidget {
 
 class _ImpactPageState extends State<ImpactPage> {
   Logger log = Logger('impact_page.dart');
-  //*TODO: TBD - do i need memberState???
-  MemberState memberState = MemberState.unknown;
 
   @override
   Widget build(BuildContext context) {
     //*TODO: Get rest of asset pictures
     //*TODO: Build background of plot
-    //*TODO: Future builder to say what state we're in?  Let's go with this for now.
 
     return Column(
       children: [
-        AppBar(title: Text("Impact")),
-        Expanded(child: _buildImpactSection(), flex: 3),
-        Expanded(child: _buildPlotArea(), flex: 1),
+        Flexible(child: _buildImpactSection(), flex: 3),
+        Flexible(child: _buildPlotArea(), flex: 1),
       ],
     );
   }
@@ -119,6 +116,15 @@ class _ImpactPageState extends State<ImpactPage> {
                     );
                   }
                   break;
+                //  If we get here, the member is in a state that isn't supported by ImpactPage. For example,
+                //  If the status of the member shows start, they don't have a monitor installed yet.
+                default:
+                  {
+                    log.severe(
+                        '!!! Error.  The expected status was either monitorActive, monitorLearning, monitorInstall.  The status is ${snapshot.data} (see globals.dart)');
+                    return _handleStatusError();
+                  }
+                  break;
               }
             } else {
               return Text('');
@@ -155,7 +161,7 @@ class _ImpactPageState extends State<ImpactPage> {
         {
           return Positioned(
               bottom: 10,
-              child: _monitorCard(status: monitorInstall, height: 420.0));
+              child: _monitorCard(status: monitorInstall, height: 350.0));
         }
       case monitorLearning:
         {
@@ -229,30 +235,99 @@ class _ImpactPageState extends State<ImpactPage> {
     }
   }
 
+  //****************************************************************************** */
+  /// Here we create a watch like countdown timer to let the member know how much
+  /// Time is left before the electrician comes out.  The member may need to reschedule
+  /// or cancel the appointment.
+  //****************************************************************************** */
   Widget _monitorInstallContent() {
     return Column(
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20.0, 30, 20, 0),
-          child: CountdownTimer(
-              title: 'Installation in', day: 2, hour: 0, min: 20),
+        Flexible(
+          child: FutureBuilder(
+              future: _getApptDateTime(context),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasData) {
+                    DateTime apptDateTime = snapshot.data;
+                    Duration difference =
+                        apptDateTime.difference(DateTime.now());
+                    String dayStr = difference.inDays > 1 ? "days" : "day";
+                    dayStr = '${difference.inDays}' + ' ' + '$dayStr';
+                    String hourStr =
+                        difference.inHours % 24 > 1 ? "hours" : "hour";
+                    hourStr = '${difference.inHours % 24}' + ' ' + '$hourStr';
+                    String minStr =
+                        difference.inMinutes % 24 > 1 ? "minutes" : "minute";
+                    minStr = '${difference.inMinutes % 60}' + ' ' + '$minStr';
+
+                    return Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20.0, 30, 20, 0),
+                          child: Text(
+                            'Appointment scheduled for',
+                            style: Theme.of(context).textTheme.subhead,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20.0, 30, 20, 0),
+                          child: Text(
+                            '${DateFormat.yMMMMd().format(apptDateTime)}',
+                            style: Theme.of(context).textTheme.display1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20.0, 30, 20, 0),
+                          child: Text(
+                            'Installation in $dayStr, $hourStr, $minStr',
+                            style: Theme.of(context).textTheme.subhead,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                } else {
+                  return Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+              }),
+          flex: 4,
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 30, bottom: 50),
-              child: FormSubmitButton(text: 'Reschedule', onPressed: _submit),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 30, bottom: 50),
-              child:
-                  FormSubmitButton(text: 'Cancel Install', onPressed: _submit),
-            )
-          ],
+        Flexible(
+          flex: 2,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(top: 30, bottom: 20),
+                child: FormSubmitButton(text: 'Reschedule', onPressed: _submit),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 30, bottom: 20),
+                child: FormSubmitButton(
+                    text: 'Cancel Install', onPressed: _submit),
+              )
+            ],
+          ),
         ),
       ],
     );
+  }
+
+  /// Get the member's appointment time so the watch face can show the right time.
+  Future<DateTime> _getApptDateTime(BuildContext context) async {
+    final appts = Provider.of<Appointments>(context);
+    String appt = await appts.getAppt(context);
+    // now that we have the string of the appt, get the hour, min, seconds.
+    if (appt.isEmpty) {
+      log.severe('The appointment date/time field is empty');
+      return null;
+    }
+    return (DateTime.parse(appt));
   }
 
   Widget _monitorLearningContent() {
@@ -279,21 +354,20 @@ class _ImpactPageState extends State<ImpactPage> {
         impactEquivalent(context, 4052, impactImage),
       ],
     );
-    // if (impactImage.contains(impactMoney)) {
-    //   return Text(impactMoney);
-    // } else if (impactImage.contains(impactTrees)) {
-    //   return Text(impactTrees);
-    // } else if (impactImage.contains(impactOil)) {
-    //   return Text(impactOil);
-    // } else {
-    //   log.info(
-    //       'Received an impact image that does not contain a substring representing what impact area it represents.  The name of the impact image is $impactImage');
-    //   return Text(impactImage);
-    // }
+  }
+  //*TODO = Implement reschedule and cancel electrician install.
+
+  _submit() {
+    PlatformAlertDialog(
+      title: 'Appointment',
+      content: 'Rescheduling/cancelling not implemented yet.',
+      defaultActionText: 'OK',
+    ).show(context);
   }
 
-  _submit() {}
-
+  //************************************************************************** */
+  //* Build the energy line plot based on incoming readings from the monitor.
+  //************************************************************************** */
   _buildPlotArea() {
     final monitors = Provider.of<Monitors>(context);
     return FutureBuilder(
@@ -304,7 +378,7 @@ class _ImpactPageState extends State<ImpactPage> {
               switch (snapshot.data) {
                 case monitorInstall:
                   {
-                    return new _buildMonitorInstallWaitingPlot();
+                    return _buildMonitorInstallWaitingPlot();
                   }
                   break;
                 case monitorLearning:
@@ -312,10 +386,24 @@ class _ImpactPageState extends State<ImpactPage> {
                   {
                     return EnergyPlot();
                   }
+                //* If we get here, we're in an unexpected monitor status state (most
+                //* likely a status of start)
+                default:
+                  return Center(
+                    child: Container(
+                      color: Colors.grey.withOpacity(.6),
+                      child: new Text(
+                        "OOPs....",
+                        style: TextStyle(
+                            fontSize: 18.0, fontWeight: FontWeight.bold),
+                      ),
+                      alignment: Alignment(0.0, 0.0),
+                    ),
+                  );
               }
             }
           } else {
-            return Container();
+            return Text('');
           }
         });
   }
@@ -392,6 +480,19 @@ class _ImpactPageState extends State<ImpactPage> {
           ),
         ],
       ),
+    );
+  }
+
+//******************************************************************** */
+//* This method is called when the monitor status returned from the db
+//*TODO: The app shows a start status, but we're on impactPage code...
+//*TODO: Handle this error with getting action then ...
+  Widget _handleStatusError() {
+    return PlatformAlertDialog(
+      title: 'Account Error',
+      content: 'Shall we recreate your account?',
+      defaultActionText: 'YES',
+      cancelActionText: 'NO',
     );
   }
 }

@@ -61,10 +61,12 @@ class Monitors {
   Future<String> getStatus(BuildContext context) async {
     // We need to get the homeowner's uid.
     final member = Provider.of<Member>(context);
-    String id = await member.id;
+    await member.getValues();
+    String id = member.id;
     if (id == null) {
       log.severe(
           '!!! Error.  The member id is null.  There should be one if this method is called.');
+      return null;
     } else {
       log.info('The member id is: $id');
     }
@@ -122,9 +124,10 @@ class Monitors {
       return null;
     }
 
-    if (_monitorsInDB == null) {
+    if (_monitorsInDB.value == null) {
       log.severe(
           '!!!Error the node available_monitors does not exist in Firebase.');
+      return null;
     }
 
     for (String key in _monitorsInDB.value.keys) {
@@ -135,7 +138,7 @@ class Monitors {
     }
     return _monitor;
   }
-  //*TODO: Thought I'd need to get the monitor name.  So far I do not.
+
 //******************************************************************** */
   //* Get the monitor name from Firebase, or return the name if we already
   // * have it.

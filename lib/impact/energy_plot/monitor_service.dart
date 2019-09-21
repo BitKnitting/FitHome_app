@@ -5,6 +5,8 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:firebase_database/firebase_database.dart';
+
 import 'energy_reading.dart';
 
 abstract class MonitorBase {
@@ -40,8 +42,28 @@ class DummyMonitor implements MonitorBase {
 
   void _putEnergyReadingIntoStream() {
     Random rnd = Random();
-    EnergyReading reading = EnergyReading(rnd.nextInt(1500), DateTime.now());
+    EnergyReading reading = EnergyReading(watts: rnd.nextInt(1500),dateTime: DateTime.now());
+
 
     controller.add(reading);
   }
+}
+
+class FirebaseMonitor {
+  static Future<StreamSubscription<Event>> getReadingsStream(
+      void onData(var reading)) async {
+    StreamSubscription<Event> readSubscription = FirebaseDatabase.instance
+        .reference()
+        .child('readings')
+        .child('bambi-09152019')
+        .onValue
+        .listen((event) {
+      var reading = event.snapshot.value;
+      print(reading);
+      onData(reading);
+    });
+    return readSubscription;
+  }
+
+  void stop() {}
 }

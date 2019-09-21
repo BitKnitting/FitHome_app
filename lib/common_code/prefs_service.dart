@@ -13,8 +13,7 @@ class Prefs {
     if (prefs.containsKey(key)) {
       value = prefs.getString(key);
     }
-    print(value);
-    print('hello');
+
     return value;
   }
 

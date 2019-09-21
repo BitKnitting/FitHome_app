@@ -1,4 +1,4 @@
-
+import 'package:fithome_app/impact/impact_page.dart';
 import 'package:fithome_app/launch_to_impact/launch_check.dart';
 import 'package:fithome_app/launch_to_impact/start_training_page.dart';
 import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
@@ -28,7 +28,8 @@ class LaunchPage extends StatelessWidget {
                       case UserState.start_training:
                         return StartTrainingPage();
                       case UserState.member:
-                        return Text('member');
+                        return ImpactPage();
+
                       case UserState.waitlist:
                         return WaitListPage();
                     }

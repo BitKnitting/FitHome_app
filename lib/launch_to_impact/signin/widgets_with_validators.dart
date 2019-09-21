@@ -134,7 +134,6 @@ class _TextEntryWidgetState extends State<TextEntryWidget> {
       } else {
         widget.validField.value = false;
       }
-      print(' widget Valid field - ${widget.validField.value} }');
     });
   }
 }

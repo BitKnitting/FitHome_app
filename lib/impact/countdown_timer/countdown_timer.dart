@@ -35,6 +35,13 @@ class _CountdownTimer extends State<CountdownTimer>
   }
 
   @override
+  void dispose() {
+    
+    super.dispose();
+    animationController.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     animationController = AnimationController(

@@ -13,12 +13,17 @@ class Member {
   String _email;
   String _password;
   String _id;
+
+  /// Gets the member properties stored in the local store.  We store these
+  /// properties so that the member can transparently sign in once an account
+  /// has been created for the homeowner.
   getValues() async {
     _email = await Prefs().getValue(emailKey);
-    _password = await Prefs().getValue(emailKey);
+    _password = await Prefs().getValue(passwordKey);
     _id = await Prefs().getValue(uidKey);
   }
 
+  /// Properties stored under the members/uid node in Firebase.
   Map<String, dynamic> toJsonStart(
           {String address,
           String zip,
@@ -43,8 +48,7 @@ class Member {
     return _email;
   }
 
-  ///
-  /// Lazy saving since Prefs().setKey() is async.
+  // Lazy saving since Prefs().setKey() is async.
   set email(String emailString) {
     _email = emailString;
     Prefs().setKey(emailKey, emailString);
@@ -54,9 +58,7 @@ class Member {
   // password property
   //**************************************************************************
   get password {
-    if (_password?.isEmpty ?? true) {
-      return _password;
-    }
+    return _password;
   }
 
   set password(String pwd) {
@@ -77,7 +79,7 @@ class Member {
   }
 
   //**************************************************************************
-  /// Clear all properties from local store.
+  /// Clear all properties from the local store.
   //**************************************************************************
   Future<bool> clear() async {
     return await Prefs().clear();
@@ -85,6 +87,9 @@ class Member {
   //**************************************************************************
   /// Create a member record within the members node of Firebase.  The member
   /// node is the member's uid.
+  /// We put the homeowner's name, address, zip code, phone, and the name of
+  /// the monitor that was assigned to the user.  The homeowner entered this
+  /// info on the StartTrainingPzge.
   //**************************************************************************
 
   Future<bool> createRecord({name, address, zip, phone, monitor}) async {
@@ -120,18 +125,17 @@ class Member {
   }
 
   Future<Map> getRecord() async {
-    String memberID = await Member().id;
-    if (memberID == null) {
+    if (_id == null) {
       // UhOh = the member should be logged in.  This means the member's UID should be available...but it isn't.
       log.severe('!!!Error Member ID is null');
       return null;
     }
-    log.info('Member id: $memberID');
+
     try {
       DataSnapshot memberInfoDB = await FirebaseDatabase.instance
           .reference()
           .child('members')
-          .child(memberID)
+          .child(_id)
           .once();
       return (memberInfoDB.value);
     } catch (e) {

@@ -184,6 +184,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
     final auth = Provider.of<AuthBase>(context);
     final member = Provider.of<Member>(context);
     await auth.createAccount(context, _email, _password);
+    member.getValues();
     if (member.id == null) {
       log.severe(
           '!!!Error: Just finished gathering all the homeowner info but could not create an account in firebase with the email and password passed in.');
@@ -194,7 +195,11 @@ class _StartTrainingPageState extends State<StartTrainingPage>
     // Each member has an associated node within the Firebase members node.  The node name is the member's uid, which is created when the Firebase account is created.
 
     bool recordCreated = await member.createRecord(
-        name: _name, address: _address, zip: _zipCode, phone: _phone, monitor: monitor);
+        name: _name,
+        address: _address,
+        zip: _zipCode,
+        phone: _phone,
+        monitor: monitor);
 
     if (recordCreated) {
       log.info('Member record created.');

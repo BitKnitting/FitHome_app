@@ -1,11 +1,12 @@
-
 import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/monitors_model.dart';
 import 'package:fithome_app/launch_to_impact/launch_page.dart';
+import 'package:fithome_app/test_page.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
 
+import 'impact/impact_page.dart';
 import 'launch_to_impact/install_monitor/appts_model.dart';
 
 // We are using the Provider package to pass around member info state
@@ -14,7 +15,6 @@ import 'package:provider/provider.dart';
 
 import 'launch_to_impact/member_model.dart';
 import 'launch_to_impact/signin/auth_service.dart';
-
 
 void main() {
   _initLogger();
@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.blue,
           ),
-          home: LaunchPage()),
+          home: ImpactPage()),
     );
   }
 }

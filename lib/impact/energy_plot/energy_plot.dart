@@ -15,35 +15,37 @@ class _EnergyPlotState extends State<EnergyPlot> {
   List<EnergyReading> energyReadings = [];
   Widget energyLine;
   var series;
-  StreamSubscription<EnergyReading> readingSubscription;
   final DummyMonitor monitor = DummyMonitor(sampleTime: 2);
-
+  StreamSubscription _subscriptionName;
   @override
   void dispose() {
+    if (_subscriptionName != null) {
+      _subscriptionName.cancel();
+    }
     super.dispose();
-    monitor.stop();
-    readingSubscription.cancel();
   }
 
   @override
   void initState() {
     super.initState();
+    FirebaseMonitor.getReadingsStream(_onNewReading)
+        .then((StreamSubscription s) => _subscriptionName = s);
 
     // Listen to the stream of incoming meter readings.
-    Stream<EnergyReading> readingStream = monitor.readings();
-    readingSubscription = readingStream.listen(
-      // Put the reading that comes into the stream into the plot data.
-      (reading) => setState(
-        () {
-          // Add the reading to the List that gets plotted.
-          energyReadings.add(reading);
-          // Plot 10 readings.  This makes the line move...
-          if (energyReadings.length > 10) {
-            energyReadings.removeAt(0);
-          }
-        },
-      ),
-    );
+    // Stream<EnergyReading> readingStream = monitor.readings();
+    // readingSubscription = readingStream.listen(
+    //   // Put the reading that comes into the stream into the plot data.
+    //   (reading) => setState(
+    //     () {
+    //       // Add the reading to the List that gets plotted.
+    //       energyReadings.add(reading);
+    //       // Plot 10 readings.  This makes the line move...
+    //       if (energyReadings.length > 10) {
+    //         energyReadings.removeAt(0);
+    //       }
+    //     },
+    //   ),
+    // );
   }
 
   @override
@@ -58,7 +60,12 @@ class _EnergyPlotState extends State<EnergyPlot> {
   // variables.
   //
   void _buildXY() {
-// Set the x/y info of the time series.
+    // Set the x/y info of the time series.
+    // Check to see if there are any energy readings.
+    //*TODO: More detailed handling.  Here I just don't want to get null returned.
+    if (energyReadings.isEmpty) {
+      energyReadings = [EnergyReading(dateTime: DateTime.now(), watts: 109)];
+    }
     series = [
       charts.Series(
         id: 'Energy Readings',
@@ -66,7 +73,7 @@ class _EnergyPlotState extends State<EnergyPlot> {
         //  x-axis = time series
         domainFn: (EnergyReading reading, _) => reading.dateTime,
         // y-axis = watt measurement at the time.
-        measureFn: (EnergyReading readings, _) => readings.watts,
+        measureFn: (EnergyReading reading, _) => reading.watts,
         data: energyReadings,
       ),
     ];
@@ -74,6 +81,19 @@ class _EnergyPlotState extends State<EnergyPlot> {
     energyLine = charts.TimeSeriesChart(
       series,
       animate: true,
+    );
+  }
+
+  void _onNewReading(reading) {
+    setState(
+      () {
+        // Add the reading to the List that gets plotted.
+        energyReadings.add(reading);
+        // Plot 10 readings.  This makes the line move...
+        if (energyReadings.length > 10) {
+          energyReadings.removeAt(0);
+        }
+      },
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
 
 import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
+import 'package:fithome_app/launch_to_impact/waitlist_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -90,8 +91,10 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
               onVisibleDaysChanged: _onVisibleDaysChanged,
             );
           } else {
+            //*TODO: Better handling when the available_appointments node not in database.
             log.severe(
-                '!!! Error - there are no available monitor installation appointments.  However checks were made previously.');
+                '!!! Error - there are no available monitor installation appointments.');
+            return WaitListPage();
           }
         } else {
           return Scaffold(
@@ -103,24 +106,6 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
       },
     );
   }
-
-  // return TableCalendar(
-  //   calendarController: _calendarController,
-  //   events: appts.installTimes,
-  //   startingDayOfWeek: StartingDayOfWeek.sunday,
-  //   calendarStyle: CalendarStyle(
-  //     selectedColor: Colors.deepOrange[400],
-  //     todayColor: Colors.purple[200],
-  //     markersColor: Colors.brown[700],
-  //     outsideDaysVisible: false,
-  //   ),
-  //   headerStyle: HeaderStyle(
-  //     // We'll show the month and chevron, but not the button.
-  //     formatButtonVisible: false,
-  //   ),
-  //   onDaySelected: _onDaySelected,
-  //   onVisibleDaysChanged: _onVisibleDaysChanged,
-  // );
 
   Widget _buildEventList() {
     return ListView(
@@ -146,11 +131,8 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
   //* User has tapped on one of the available appointments.
   //********************************************************************** */
   void _eventTapped(BuildContext context, dynamic event) async {
-    print(
-        '_selectedDay type: ${_selectedDay.runtimeType}  value: $_selectedDay');
-    print('Event type: ${event.runtimeType}  value: $event');
     final appts = Provider.of<Appointments>(context);
-    print('$event tapped');
+
     String dateStr = DateFormat.MMMMEEEEd().format(_selectedDay);
     bool scheduleAppointment = await PlatformAlertDialog(
       title: '$dateStr  $event',
