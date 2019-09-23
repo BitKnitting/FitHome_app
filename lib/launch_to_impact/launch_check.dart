@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
-import 'install_monitor/appts_model.dart';
 import 'install_monitor/monitors_model.dart';
 import 'signin/auth_service.dart';
 

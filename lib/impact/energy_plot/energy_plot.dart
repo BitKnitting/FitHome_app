@@ -64,7 +64,9 @@ class _EnergyPlotState extends State<EnergyPlot> {
     // Check to see if there are any energy readings.
     //*TODO: More detailed handling.  Here I just don't want to get null returned.
     if (energyReadings.isEmpty) {
-      energyReadings = [EnergyReading(dateTime: DateTime.now(), watts: 109)];
+      for (int i = 0; i < 9; i++) {
+        energyReadings.add(EnergyReading(dateTime: DateTime.now(), watts: 0));
+      }
     }
     series = [
       charts.Series(

@@ -1,8 +1,9 @@
 //*************************************************************************** */
 
 // By using the Member class, our abstract AuthBase could be built from other authentication dbs.
-import 'package:firebase_database/firebase_database.dart';
+
 import 'package:fithome_app/common_code/prefs_service.dart';
+import 'package:fithome_app/database/DB_model.dart';
 import 'package:logging/logging.dart';
 import 'package:fithome_app/common_code/globals.dart';
 
@@ -67,7 +68,7 @@ class Member {
   }
 
   //**************************************************************************
-  // saveUid property
+  // id property
   //**************************************************************************
   Future<void> saveUid(String uid) async {
     _id = uid;
@@ -85,62 +86,27 @@ class Member {
     return await Prefs().clear();
   }
   //**************************************************************************
-  /// Create a member record within the members node of Firebase.  The member
-  /// node is the member's uid.
-  /// We put the homeowner's name, address, zip code, phone, and the name of
+  /// Create a member record within the members node of Firebase.
+  /// We put the homeowner's name, address, zip code, phone into the member
+  /// record.  This info was entered by the homeowner. and the name of
   /// the monitor that was assigned to the user.  The homeowner entered this
   /// info on the StartTrainingPzge.
   //**************************************************************************
 
   Future<bool> createRecord({name, address, zip, phone, monitor}) async {
-    // For the member that has the uid,
-    // Note: push() generates a document id.  set() does not.
-    String memberID = await id;
-    String _email = await email;
+    String _email = email;
     Map userRecordJson = Member().toJsonStart(
         email: _email, name: name, address: address, zip: zip, phone: phone);
-    try {
-      await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(memberID)
-          .set(userRecordJson);
-    } catch (e) {
-      log.info('Error: ${e.message} .');
+    bool dbActionWorked = await DBHelper()
+        .setData(dbRef: DBRef.memberRef(id), data: userRecordJson);
+    if (!dbActionWorked) {
       return false;
     }
-    try {
-      await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(memberID)
-          .child('monitor')
-          .set({'name': monitor});
-    } catch (e) {
-      log.info('Error: ${e.message} .');
+    dbActionWorked = await DBHelper()
+        .setData(dbRef: DBRef.memberMonitorRef(id), data: {'name': monitor});
+    if (!dbActionWorked) {
       return false;
     }
-
     return true;
-  }
-
-  Future<Map> getRecord() async {
-    if (_id == null) {
-      // UhOh = the member should be logged in.  This means the member's UID should be available...but it isn't.
-      log.severe('!!!Error Member ID is null');
-      return null;
-    }
-
-    try {
-      DataSnapshot memberInfoDB = await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(_id)
-          .once();
-      return (memberInfoDB.value);
-    } catch (e) {
-      log.info('Error: ${e.message} .');
-    }
-    return null;
   }
 }

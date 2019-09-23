@@ -1,9 +1,14 @@
+import 'package:firebase_database/firebase_database.dart';
+
 class EnergyReading {
   DateTime dateTime;
-  int watts;
+  double watts;
 
   EnergyReading({this.watts, this.dateTime});
-  EnergyReading.fromJson(Map<String, dynamic> data)
-      : dateTime = data['dateTime'],
-        watts = data['watts'];
+
+  EnergyReading.fromSnapshot(DataSnapshot snapshot) {
+    dateTime =
+        DateTime.fromMillisecondsSinceEpoch(int.parse(snapshot.key) * 1000);
+    watts = snapshot.value["P"];
+  }
 }
