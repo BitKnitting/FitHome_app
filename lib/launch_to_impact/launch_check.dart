@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
+import 'package:fithome_app/database/DB_model.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'install_monitor/monitors_model.dart';
 import 'signin/auth_service.dart';
 
-enum UserState { unknown, waitlist, start_training, member }
+enum UserState { unknown, waitlist, start_training, member ,memberNoInstallDate}
 
 class LaunchCheck {
   final Logger log = Logger('launch_check.dart');
@@ -56,7 +57,7 @@ class LaunchCheck {
 //*getting homeowner info and setting up an install time for an
 //*electrician to come out and install a monitor.
 //****************************************** */
-  Future<UserState> checkForMembership(BuildContext context) async {
+  Future<UserState> checkMembership(BuildContext context) async {
     final auth = Provider.of<AuthBase>(context);
     final monitors = Provider.of<Monitors>(context);
     if (!await isWifi()) {
@@ -82,7 +83,14 @@ class LaunchCheck {
       }
       return UserState.start_training;
     } else {
-//* The user is already a member.
+      var _installDateTime =
+          await DBHelper().getData(dbRef: DBRef.memberInstallDateTimeRef(_memberUid));
+      if (_installDateTime == null) {
+          //* The user is a member, but does not have an appointment to install a monitor
+          log.info('The user is a member, but does not have an appointment to install a monitor');
+          return UserState.memberNoInstallDate;
+      }
+
       log.info('The user can log in, already a member.');
       return UserState.member;
     }

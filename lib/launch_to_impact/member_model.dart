@@ -37,7 +37,6 @@ class Member {
         "email": email,
         "name": name,
         "phone": phone,
-        "status": "start",
         "start_timestamp": {".sv": "timestamp"},
       };
 
@@ -97,16 +96,23 @@ class Member {
     String _email = email;
     Map userRecordJson = Member().toJsonStart(
         email: _email, name: name, address: address, zip: zip, phone: phone);
+
     bool dbActionWorked = await DBHelper()
         .setData(dbRef: DBRef.memberRef(id), data: userRecordJson);
     if (!dbActionWorked) {
       return false;
     }
     dbActionWorked = await DBHelper()
-        .setData(dbRef: DBRef.memberMonitorRef(id), data: {'name': monitor});
+        .updateData(dbRef: DBRef.memberMonitorRef(id), data: {'name': monitor});
     if (!dbActionWorked) {
       return false;
     }
+    dbActionWorked = await DBHelper().updateData(
+        dbRef: DBRef.memberMonitorRef(id), data: {'status': 'not_active'});
+    if (!dbActionWorked) {
+      return false;
+    }
+    log.info('Member record has been created.');
     return true;
   }
 }

@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 import '../../navigation_page.dart';
+import '../../table_calendar.dart';
 
 class InstallMonitorPage extends StatefulWidget {
   @override
@@ -78,9 +78,9 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
               events: snapshot.data,
               startingDayOfWeek: StartingDayOfWeek.sunday,
               calendarStyle: CalendarStyle(
-                selectedColor: Colors.deepOrange[400],
-                todayColor: Colors.purple[200],
-                markersColor: Colors.brown[700],
+                selectedColor: Colors.purple[400],
+                todayColor: Colors.orange[200],
+                markersColor: Colors.green[700],
                 outsideDaysVisible: false,
               ),
               headerStyle: HeaderStyle(
@@ -149,8 +149,6 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
             'appointment has been scheduled for day: $_selectedDay and time: $event');
         Navigator.of(context).pushReplacement(MaterialPageRoute(
             fullscreenDialog: true, builder: (context) => NavigationPage()));
-        //*TODO: pop the installMonitorPage
-        //*TODO: push the page showing waiting for monitor to be installed.
       } else {
         //*TODO: Error trying to set up monitor install appointment... need UI and error handling to member services.
         log.severe(

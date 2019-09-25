@@ -58,12 +58,12 @@ class _ImpactPageState extends State<ImpactPage> {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               switch (snapshot.data) {
-                case monitorInstall:
+                case monitorNotActive:
                   {
                     return Stack(
                       children: <Widget>[
                         _buildImageLayer('assets/misc/female-electrician.png'),
-                        _buildMonitorLayer(monitorStatus: monitorInstall),
+                        _buildMonitorLayer(monitorStatus: monitorNotActive),
                       ],
                     );
                   }
@@ -157,11 +157,11 @@ class _ImpactPageState extends State<ImpactPage> {
 
   _buildMonitorLayer({@required String monitorStatus, String impactImage}) {
     switch (monitorStatus) {
-      case monitorInstall:
+      case monitorNotActive:
         {
           return Positioned(
               bottom: 10,
-              child: _monitorCard(status: monitorInstall, height: 350.0));
+              child: _monitorCard(status: monitorNotActive, height: 350.0));
         }
       case monitorLearning:
         {
@@ -217,7 +217,7 @@ class _ImpactPageState extends State<ImpactPage> {
 
   _buildMonitorContent({@required String status, String impactImage}) {
     switch (status) {
-      case monitorInstall:
+      case monitorNotActive:
         {
           return _monitorInstallContent();
         }
@@ -323,7 +323,7 @@ class _ImpactPageState extends State<ImpactPage> {
     final appts = Provider.of<Appointments>(context);
     String appt = await appts.getAppt(context);
     // now that we have the string of the appt, get the hour, min, seconds.
-    if (appt.isEmpty) {
+    if (appt ==null) {
       log.severe('The appointment date/time field is empty');
       return null;
     }
@@ -376,7 +376,7 @@ class _ImpactPageState extends State<ImpactPage> {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               switch (snapshot.data) {
-                case monitorInstall:
+                case monitorNotActive:
                   {
                     return _buildMonitorInstallWaitingPlot();
                   }

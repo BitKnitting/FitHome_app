@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:fithome_app/database/DB_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -19,7 +19,7 @@ class Monitors {
   //*TODO: Resetting monitor availability when homeowner ends the challenge.
   //**************************************************************************
   Future<String> makeMonitorName() async {
-    String _monitor = await _getAvailableMonitorFromDB();
+    String _monitor = await _getAvailableMonitor();
 
     if (_monitor == null) {
       log.severe('!!! Error: a monitor is not available');
@@ -41,7 +41,7 @@ class Monitors {
   //* It is available.
   //******************************************************************** */
   Future<bool> checkAvailability() async {
-    String monitor = await _getAvailableMonitorFromDB();
+    String monitor = await _getAvailableMonitor();
     if (monitor == null) {
       return false;
     } else {
@@ -49,14 +49,12 @@ class Monitors {
     }
   }
 
-  //******************************************************************** */
-  //* Once a homeowner has scheduled an appointment, the monitor can be
-  //* in UI states:
-  //* - Start - Homeowner info has been entered, but monitor installation time has not been set.
-  //* - Waiting for monitor installation.
-  //* - Collecting baseling readings.
-  //* - Active in FitHome training.
-  //* With this method, we can return the monitor's state.
+  ///******************************************************************** */
+  /// Once a homeowner has scheduled an appointment, the monitor can be
+  /// in UI states:
+  /// * not_active - The homeowner has filled out the information FitHome needs to create a member.
+  /// * learn - The monitor has been installed.  It is gathering data so that the system can personalize electricity savings advice.
+  /// * active - Enough learning data has been gathered to make initial personalized electricity savings recommendations.
   //******************************************************************** */
   Future<String> getStatus(BuildContext context) async {
     // We need to get the homeowner's uid.
@@ -70,114 +68,45 @@ class Monitors {
     } else {
       log.info('The member id is: $id');
     }
-    try {
-      DataSnapshot statusDB = await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(id)
-          .child('status')
-          .once();
-
-      log.info('The monitor status is: ${statusDB.value}');
-      return statusDB.value;
-    } catch (e) {
-      log.info(
-          '!!!Error: ${e.message} On attempting to get the monitor status!!!');
-      return null;
-    }
+    String _status = await DBHelper().getData(
+      dbRef: DBRef.memberMonitorStatusRef(id),
+    );
+    return _status;
   }
 
   //**************************************************************************
-  //* Set the monitor's value to 'false' so it is no longer seen as available.
+  //* Update the monitor's value to 'false' so it is no longer seen as available.
   //**************************************************************************
   void _setUnavailable(String monitor) async {
-    try {
-      await FirebaseDatabase.instance
-          .reference()
-          .child('available_monitors')
-          .update({monitor: false});
-      log.info('Updated $monitor availability to false in Firebase.');
-    } catch (e) {
-      log.info(
-          '!!!Error: ${e.message} On attempting to set monitor $monitor to false in Firebase.!!!');
-      return;
-    }
+    await DBHelper().updateData(
+        dbRef: DBRef.monitorsAvailableRef(), data: {monitor: false});
   }
 
   //******************************************************************** */
   //* Grab the list of monitors and see if any are available.  If there is one
   //* available, return the monitor name.  If not, return null.
   //******************************************************************** */
-  Future<String> _getAvailableMonitorFromDB() async {
+  Future<String> _getAvailableMonitor() async {
     // Go through monitors and find one that is available.  A monitor is available
     // if it's name (which is the key) is equal to 'true'.
     String _monitor;
 
-    DataSnapshot _monitorsInDB;
-    try {
-      _monitorsInDB = await FirebaseDatabase.instance
-          .reference()
-          .child('available_monitors')
-          .once();
-    } catch (e) {
-      log.severe('Error!  Message: $e');
-      return null;
-    }
+    Map _availableMonitors;
 
-    if (_monitorsInDB.value == null) {
+    _availableMonitors =
+        await DBHelper().getData(dbRef: DBRef.monitorsAvailableRef());
+    if (_availableMonitors == null) {
       log.severe(
           '!!!Error the node available_monitors does not exist in Firebase.');
       return null;
     }
 
-    for (String key in _monitorsInDB.value.keys) {
-      if (_monitorsInDB.value[key] == true) {
+    for (String key in _availableMonitors.keys) {
+      if (_availableMonitors[key] == true) {
         _monitor = key;
         break;
       }
     }
     return _monitor;
   }
-
-//******************************************************************** */
-  //* Get the monitor name from Firebase, or return the name if we already
-  // * have it.
-  //******************************************************************** */
-
-  // Future<String> getMonitorName(BuildContext context) async {
-  //   if (_monitorFullName?.isEmpty ?? true) {
-  //     return await _getMonitorName(context);
-  //   } else {
-  //     return _monitorFullName;
-  //   }
-  // }
-  //******************************************************************** */
-  //* Internal method to get the monitor name from Firebase.
-  //******************************************************************** */
-  // Future<String> _getMonitorName(BuildContext context) async {
-  //   final member = Provider.of<Member>(context);
-  //   String id = await member.id;
-  //   if (id == null) {
-  //     log.severe(
-  //         '!!! Error.  The member id is null.  There should be one if this method is called.');
-  //   }
-  //   DataSnapshot _monitorNameDB;
-  //   try {
-  //     _monitorNameDB = await FirebaseDatabase.instance
-  //         .reference()
-  //         .child('members')
-  //         .child(id)
-  //         .child('monitor')
-  //         .child('name')
-  //         .once();
-  //   } catch (e) {
-  //     log.severe('Error!  Message: $e');
-  //     return null;
-  //   }
-  //   if (_monitorNameDB == null) {
-  //     log.severe(
-  //         'Tried to get the monitor name.  Firebase returned null.  There should have been a monitor name.');
-  //   }
-  //   return _monitorNameDB.value;
-  // }
 }

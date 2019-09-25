@@ -369,14 +369,18 @@ class _StartTrainingPageState extends State<StartTrainingPage>
   //********************************************************************** */
   @override
   Widget build(BuildContext context) {
-    return ListView(
+     return Scaffold(
+      appBar: AppBar(
+        title: Text('Member Registration'),
+      ),
+      body: ListView(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
           child: _buildStartTrainingForm(),
         ),
       ],
-    );
+    ));
   }
 
   _checkExpandText() {

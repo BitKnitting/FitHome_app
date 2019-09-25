@@ -2,6 +2,7 @@
 // This code returns the appointments map that is used by TableCalendar
 //
 import 'package:firebase_database/firebase_database.dart';
+import 'package:fithome_app/database/DB_model.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -36,6 +37,9 @@ class Appointments {
     Map<DateTime, String> _installTimes = Map<DateTime, String>();
     // Here's where we will set the uid for the other method/functions
     final _member = Provider.of<Member>(context);
+    // I keep forgetting to do this...so obviously this isn't the best way to fill in
+    // stuff stored locally.
+    await _member.getValues();
     _uid = _member.id;
     Map<DateTime, List> apptList = Map<DateTime, List>();
     // Make sure we have the _installTimes Map.
@@ -99,7 +103,7 @@ class Appointments {
     }
     // Electrician availability is localized to a zip code.  We need the member's zip code.
     _zipCode = await _getZipCode();
-    DataSnapshot _installTimesInDB = await _getInstallTimesFromDB();
+    Map _installTimesInDB = await _getInstallTimes();
     if (_installTimesInDB == null) {
       return null;
     }
@@ -112,57 +116,34 @@ class Appointments {
   /// Get the member's zip code from the database.
   //**************************************************************************
   Future<String> _getZipCode() async {
-    DataSnapshot _dbReturn;
-    try {
-      _dbReturn = await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(_uid)
-          .child('zipcode')
-          .once();
-      return (_dbReturn.value);
-    } catch (e) {
-      log.severe('Error!  Message: $e');
-      //* return a null list.
-      return null;
-    }
+    String _zipcode =
+        await DBHelper().getData(dbRef: DBRef.memberZipcodeRef(_uid));
+    return _zipcode;
   }
 
   //**************************************************************************
   /// Get the available appointments for this zip code from the database.
   //**************************************************************************
-  Future<DataSnapshot> _getInstallTimesFromDB() async {
-    DataSnapshot _installTimesInDB;
-    try {
-      _installTimesInDB = await FirebaseDatabase.instance
-          .reference()
-          .child('available_appointments')
-          // We gpt the member's zipcode from above.  Now let's get the available appointments.
-          .child(_zipCode)
-          .once();
-      if (_installTimesInDB.value == null) {
-        log.severe('!!!Error: available_appointments node not in the db.');
-        return null;
-      }
-    } catch (e) {
-      log.severe('Error!  Message: $e');
-      //* return a null list.
+  Future<Map> _getInstallTimes() async {
+    Map _installTimes = await DBHelper()
+        .getData(dbRef: DBRef.availableApptsZipCodeRef(_zipCode));
+    if (_installTimes == null) {
+      log.severe('!!!Error: available_appointments node not in the db.');
       return null;
     }
-    return _installTimesInDB;
+    return _installTimes;
   }
 
   //**************************************************************************
   // Check if the available_times node in Firebase has any install entries.
   //**************************************************************************
-  Future<Map<DateTime, String>> _deleteOldAppts(
-      DataSnapshot _installTimesInDB) async {
+  Future<Map<DateTime, String>> _deleteOldAppts(Map _installTimesInDB) async {
     Map<DateTime, String> _installTimes = Map<DateTime, String>();
     // Create a variable to hold the keys of the datetimes that have already passed.
     // We'll want to delete these from Firebase.
     List<String> keyList = List<String>();
     // Get the available date/times and electrician names from Firebase RT
-    _installTimesInDB.value.forEach(
+    _installTimesInDB.forEach(
       (key, value) {
         try {
           DateTime dt = DateTime.parse(value["datetime"]);
@@ -186,46 +167,13 @@ class Appointments {
     // Delete any appointments that are past due.
     if (keyList.isNotEmpty) {
       keyList.forEach((key) async {
-        try {
-          await FirebaseDatabase.instance
-              .reference()
-              .child('available_appointments')
-              .child(_zipCode)
-              .child(key)
-              .remove();
-        } catch (e) {
-          log.severe('Error!  Message: $e');
-        }
+        await DBHelper()
+            .removeData(dbRef: DBRef.availableApptZipCodeRef(_zipCode, key));
       });
     }
     // _installTimes should be empty if all appointments were in the past...
     return _installTimes;
   }
-
-  //**************************************************************************
-  // I set up mock install times and real install times.  This way, I can
-  // switch depending on what I'm testing.
-  //**************************************************************************
-  // OLD - requires additional work if want to use.
-  // get mockinstallTimes async {
-  //   DateTime dateTime = DateTime.now();
-  //   await Future.delayed(const Duration(seconds: 2), () {
-  //     _installTimes = {
-  //       dateTime.add(Duration(days: 2)): ['10:30', '12:30', '13:00'],
-  //       dateTime.add(Duration(days: 20)): ['9:15', '12:15'],
-  //     };
-  //     _installTimesDB = _installTimes;
-  //   });
-  // }
-  //**************************************************************************
-  /// When we set an appointment for an electrician to come out and install a
-  /// monitor, the following changes are made to Firebase:
-  ///
-  ///   - install_date contains the String representation of the datetime
-  ///     of the electrician's appointment.
-  ///  - electrician contains the electrician's name.
-  /// Note: the monitor (in it's full name) is already in the name field.
-  ///
 
   //**************************************************************************
   Future<bool> setAppt(
@@ -252,7 +200,7 @@ class Appointments {
   // The homeowner may get a reminder when the appointment is scheduled.
   //************************************************************ */
   Future<String> getAppt(BuildContext context) async {
-    DataSnapshot _apptDB;
+    var _appt;
     final member = Provider.of<Member>(context);
     await member.getValues();
     String uid = member.id;
@@ -260,23 +208,13 @@ class Appointments {
       log.severe(
           '!!! Error.  The member id is null.  There should be one if this method is called.');
     }
-    try {
-      _apptDB = await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(uid)
-          .child('monitor')
-          .child('install_datetime')
-          .once();
-    } catch (e) {
-      log.severe('Error!  Message: $e');
-      return null;
-    }
-    if (_apptDB == null) {
+    _appt =
+        await DBHelper().getData(dbRef: DBRef.memberInstallDateTimeRef(uid));
+    if (_appt == null) {
       log.severe(
           'Tried to get the install_datetime.  Firebase returned null.  There should have been an install_datetime.');
     }
-    return _apptDB.value;
+    return _appt;
   }
 
   //************************************************************ */
@@ -295,11 +233,11 @@ class Appointments {
       _zipCode = await _getZipCode();
     }
 
-    DataSnapshot installTimesSnapshot = await _getInstallTimesFromDB();
+    var _installTimes = await _getInstallTimes();
 
     //* Get the electrician's name associated with the install time.
 
-    installTimesSnapshot.value.forEach(
+    _installTimes.forEach(
       (key, value) {
         if (DateTime.parse(value['datetime']) == apptDateTime) {
           log.info(
@@ -319,37 +257,14 @@ class Appointments {
     }
 
     //* Store the install_datetime and electrician in Firebase under the member's monitor node.
-    try {
-      await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(uid)
-          .child('monitor')
-          .update({
-        'install_datetime': apptDateTimeString,
-        'electrician': electrician
-      });
-      log.info(
-          'Updated member $uid install date_time to $apptDateTimeString, and electrician to $electrician under the monitor node.');
-    } catch (e) {
-      log.severe(
-          '!!!Error: **${e.message}** On attempting to Update member $uid  install date_time to $apptDateTimeString and electrician to $electrician !!!');
-      return false;
-    }
-    // An appointment has been scheduled for an electrician to come out.
-    // Update the member's status to install - which means waiting for installation.
-    try {
-      await FirebaseDatabase.instance
-          .reference()
-          .child('members')
-          .child(uid)
-          .update({'status': 'install'});
-      log.info('Updated member $uid status to install');
-    } catch (e) {
-      log.severe(
-          '!!!Error: **${e.message}** On attempting to Update member $uid  status to install!!!');
-      return false;
-    }
+    await DBHelper().updateData(
+        dbRef: DBRef.memberMonitorRef(uid),
+        data: {'install_datetime': apptDateTimeString});
+    await DBHelper().updateData(
+        dbRef: DBRef.memberMonitorRef(uid), data: {'electrician': electrician});
+
+    log.info(
+        'Updated member $uid install date_time to $apptDateTimeString, and electrician to $electrician under the monitor node.');
     return true;
   }
 
@@ -361,18 +276,8 @@ class Appointments {
     if (_zipCode.isEmpty) {
       _zipCode = await _getZipCode();
     }
-    try {
-      await FirebaseDatabase.instance
-          .reference()
-          .child('available_appointments')
-          .child(_zipCode)
-          .child(key)
-          .remove();
+    DBHelper().removeData(dbRef:DBRef.availableApptZipCodeRef(_zipCode, key));
       log.info(
           'Removed the date/time ${value['datetime']} from available_times in Firebase.');
-    } catch (e) {
-      log.severe(
-          '!!!Error: **${e.message}** On attempting to remove date/time ${value['datetime']} from available_times in Firebase.');
-    }
   }
 }
