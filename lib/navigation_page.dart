@@ -5,7 +5,7 @@
 import 'package:fithome_app/common_code/globals.dart';
 import 'package:fithome_app/contact/contact_page.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/monitors_model.dart';
-import 'package:fithome_app/training/training_page.dart';
+import 'package:fithome_app/insight/insight_page.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
