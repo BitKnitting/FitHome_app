@@ -28,8 +28,8 @@ class LaunchPage extends StatelessWidget {
                 log.info(
                     'checking for membership is done.  state: ${snapshot.data}');
                 switch (snapshot.data) {
-                  case UserState.start_training:
-                    return StartTrainingPage();
+                  case UserState.enroll:
+                    return EnrollPage();
                   case UserState.memberNoInstallDate:
              
                     return InstallMonitorPage();

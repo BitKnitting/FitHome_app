@@ -18,7 +18,7 @@ class Monitors {
   //* monitor name.
   //*TODO: Resetting monitor availability when homeowner ends the challenge.
   //**************************************************************************
-  Future<String> makeMonitorName() async {
+  Future<String> makeMonitorName(String uid) async {
     String _monitor = await _getAvailableMonitor();
 
     if (_monitor == null) {
@@ -33,6 +33,15 @@ class Monitors {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('MMddyyyy').format(now);
     _monitorFullName = _monitor + '-' + formattedDate;
+
+    /// Now that we have the full monitor name, we make a new dbref <FB Project>/{_monitorFullName}.
+    /// Under the node we will have two children: 1) uid 2) readings. The readings child is "owned"
+    /// by the monitor.  This is where readings are stored.  The uid associated the member with the
+    /// monitor.  This is used by a back end (db) trigger.
+    DBHelper().updateData(
+        dbRef: DBRef.monitorRef(_monitorFullName), data: {"uid": uid});
+    log.info('Created monitor node $_monitorFullName in Firebase.');
+
     return _monitorFullName;
   }
 
@@ -56,7 +65,7 @@ class Monitors {
   /// * learn - The monitor has been installed.  It is gathering data so that the system can personalize electricity savings advice.
   /// * active - Enough learning data has been gathered to make initial personalized electricity savings recommendations.
   //******************************************************************** */
-  Future<String> getStatus(BuildContext context) async {
+  Future<Map> getInfo(BuildContext context) async {
     // We need to get the homeowner's uid.
     final member = Provider.of<Member>(context);
     await member.getValues();
@@ -68,10 +77,10 @@ class Monitors {
     } else {
       log.info('The member id is: $id');
     }
-    String _status = await DBHelper().getData(
-      dbRef: DBRef.memberMonitorStatusRef(id),
+    Map _monitorInfo = await DBHelper().getData(
+      dbRef: DBRef.memberMonitorRef(id),
     );
-    return _status;
+    return _monitorInfo;
   }
 
   //**************************************************************************

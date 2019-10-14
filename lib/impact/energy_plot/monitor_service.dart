@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:firebase_database/firebase_database.dart';
+import 'package:fithome_app/database/DB_model.dart';
 import 'package:logging/logging.dart';
 
 import 'energy_reading.dart';
@@ -43,8 +44,8 @@ class DummyMonitor implements MonitorBase {
 
   void _putEnergyReadingIntoStream() {
     Random rnd = Random();
-    EnergyReading reading =
-        EnergyReading(watts: rnd.nextDouble()*1500.0, dateTime: DateTime.now());
+    EnergyReading reading = EnergyReading(
+        watts: rnd.nextDouble() * 1500.0, dateTime: DateTime.now());
 
     controller.add(reading);
   }
@@ -52,15 +53,13 @@ class DummyMonitor implements MonitorBase {
 
 class FirebaseMonitor {
   static Future<StreamSubscription<Event>> getReadingsStream(
-      void onData(var reading)) async {
-    StreamSubscription<Event> readSubscription = FirebaseDatabase.instance
-        .reference()
-        .child('readings')
-        .child('bambi-09152019')
-        .onChildChanged
-        .listen((event) {
+      String monitorName, void onData(var reading)) async {
+    final DatabaseReference _readingsRef = DBRef.readingsRef(monitorName);
+    final StreamSubscription<Event> readSubscription =
+        _readingsRef.onChildAdded.listen((event) {
       var watts = event.snapshot.value["P"];
-      DateTime datetime = DateTime.fromMillisecondsSinceEpoch(int.parse(event.snapshot.key) * 1000);
+      DateTime datetime = DateTime.fromMillisecondsSinceEpoch(
+          int.parse(event.snapshot.key) * 1000);
       print('watts: $watts  datetime: $datetime');
       if (watts == null) {
         onData(EnergyReading(dateTime: DateTime.now(), watts: 0));

@@ -22,7 +22,68 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
   List _selectedEvents = List();
 
   CalendarController _calendarController = CalendarController();
+
+  Map<DateTime, List> _events = Map<DateTime, List>();
   DateTime _selectedDay = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // _events = {
+    //   _selectedDay.subtract(Duration(days: 30)): [
+    //     'Event A0',
+    //     'Event B0',
+    //     'Event C0'
+    //   ],
+    //   _selectedDay.subtract(Duration(days: 27)): ['Event A1'],
+    //   _selectedDay.subtract(Duration(days: 20)): [
+    //     'Event A2',
+    //     'Event B2',
+    //     'Event C2',
+    //     'Event D2'
+    //   ],
+    //   _selectedDay.subtract(Duration(days: 16)): ['Event A3', 'Event B3'],
+    //   _selectedDay.subtract(Duration(days: 10)): [
+    //     'Event A4',
+    //     'Event B4',
+    //     'Event C4'
+    //   ],
+    //   _selectedDay.subtract(Duration(days: 4)): [
+    //     'Event A5',
+    //     'Event B5',
+    //     'Event C5'
+    //   ],
+    //   _selectedDay.subtract(Duration(days: 2)): ['Event A6', 'Event B6'],
+    //   _selectedDay: ['Event A7', 'Event B7', 'Event C7', 'Event D7'],
+    //   _selectedDay.add(Duration(days: 1)): [
+    //     'Event A8',
+    //     'Event B8',
+    //     'Event C8',
+    //     'Event D8'
+    //   ],
+    //   _selectedDay.add(Duration(days: 3)):
+    //       Set.from(['Event A9', 'Event A9', 'Event B9']).toList(),
+    //   _selectedDay.add(Duration(days: 7)): [
+    //     'Event A10',
+    //     'Event B10',
+    //     'Event C10'
+    //   ],
+    //   _selectedDay.add(Duration(days: 11)): ['Event A11', 'Event B11'],
+    //   _selectedDay.add(Duration(days: 17)): [
+    //     'Event A12',
+    //     'Event B12',
+    //     'Event C12',
+    //     'Event D12'
+    //   ],
+    //   _selectedDay.add(Duration(days: 22)): ['Event A13', 'Event B13'],
+    //   _selectedDay.add(Duration(days: 26)): [
+    //     'Event A14',
+    //     'Event B14',
+    //     'Event C14'
+    //   ],
+    // };
+  }
 
   @override
   void dispose() {
@@ -65,45 +126,106 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
   }
 
   // Simple TableCalendar configuration (using Styles)
+  // Widget _buildTableCalendar(BuildContext context) {
+  //   final appts = Provider.of<Appointments>(context);
+  //   return FutureBuilder(
+  //     // The Table Calendar gets rebuilt many times.  However, the first time we need the install times.
+  //     future: appts.getCalendarDateTimes(context),
+  //     builder: (context, snapshot) {
+  //       if (snapshot.connectionState == ConnectionState.done) {
+  //         if (snapshot.hasData) {
+  //           return TableCalendar(
+  //             calendarController: _calendarController,
+  //             events: snapshot.data,
+  //             startingDayOfWeek: StartingDayOfWeek.sunday,
+  //             calendarStyle: CalendarStyle(
+  //               selectedColor: Colors.deepOrange[400],
+  //               todayColor: Colors.deepOrange[200],
+  //               markersColor: Colors.brown[700],
+  //               outsideDaysVisible: false,
+  //             ),
+  //             headerStyle: HeaderStyle(
+  //               formatButtonVisible: false,
+  //             ),
+  //             onDaySelected: _onDaySelected,
+  //             onVisibleDaysChanged: _onVisibleDaysChanged,
+  //           );
+  //         } else {
+  //           //*TODO: Better handling when the available_appointments node not in database.
+  //           log.severe(
+  //               '!!! Error - there are no available monitor installation appointments.');
+  //           return WaitListPage();
+  //         }
+  //       } else {
+  //         return Scaffold(
+  //           body: Center(
+  //             child: CircularProgressIndicator(),
+  //           ),
+  //         );
+  //       }
+  //     },
+  //   );
+  // }
   Widget _buildTableCalendar(BuildContext context) {
-    final appts = Provider.of<Appointments>(context);
-    return FutureBuilder(
-      // The Table Calendar gets rebuilt many times.  However, the first time we need the install times.
-      future: appts.getCalendarDateTimes(context),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.hasData) {
-            return TableCalendar(
-              calendarController: _calendarController,
-              events: snapshot.data,
-              startingDayOfWeek: StartingDayOfWeek.sunday,
-              calendarStyle: CalendarStyle(
-                selectedColor: Colors.purple[400],
-                todayColor: Colors.orange[200],
-                markersColor: Colors.green[700],
-                outsideDaysVisible: false,
+    // final appts = Provider.of<Appointments>(context);
+    // appts.getCalendarDateTimes(context).then((availableAppts) {
+    //   _events = availableAppts;
+    //   print('$_events');
+    //   print('hello!!!');
+    // });
+    //** */
+    // I get the events from the db.  So FutureBuilder makes sense.  Particularly because
+    // the events is set once.  However, if Futurebuilder keeps getting relentlessly called,
+    // calendar features stop working, like the selected Color and going to prev/next months.
+    // My "kludge" is to figure out if the events list is empty and only use future builder at
+    // that point.
+    if (_events.isEmpty) {
+      return FutureBuilder(
+          future: _getEvents(context),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasData) {
+                return TableCalendar(
+                  calendarController: _calendarController,
+                  events: snapshot.data,
+                  startingDayOfWeek: StartingDayOfWeek.sunday,
+                  calendarStyle: CalendarStyle(
+                    selectedColor: Colors.deepOrange[400],
+                    todayColor: Colors.deepOrange[200],
+                    markersColor: Colors.brown[700],
+                    outsideDaysVisible: false,
+                  ),
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                  ),
+                  onDaySelected: _onDaySelected,
+                  onVisibleDaysChanged: _onVisibleDaysChanged,
+                );
+              }
+            }
+            return Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
               ),
-              headerStyle: HeaderStyle(
-                // We'll show the month and chevron, but not the button.
-                formatButtonVisible: false,
-              ),
-              onDaySelected: _onDaySelected,
-              onVisibleDaysChanged: _onVisibleDaysChanged,
             );
-          } else {
-            //*TODO: Better handling when the available_appointments node not in database.
-            log.severe(
-                '!!! Error - there are no available monitor installation appointments.');
-            return WaitListPage();
-          }
-        } else {
-          return Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-      },
+          });
+    }
+    //* Events have been populated.  Don't use FutureBuilder.
+    return TableCalendar(
+      calendarController: _calendarController,
+      events: _events,
+      startingDayOfWeek: StartingDayOfWeek.sunday,
+      calendarStyle: CalendarStyle(
+        selectedColor: Colors.deepOrange[400],
+        todayColor: Colors.deepOrange[200],
+        markersColor: Colors.brown[700],
+        outsideDaysVisible: false,
+      ),
+      headerStyle: HeaderStyle(
+        formatButtonVisible: false,
+      ),
+      onDaySelected: _onDaySelected,
+      onVisibleDaysChanged: _onVisibleDaysChanged,
     );
   }
 
@@ -155,5 +277,69 @@ class _InstallMonitorPageState extends State<InstallMonitorPage>
             '!!! Could not set appointment for day: $_selectedDay and time: $event');
       }
     }
+  }
+
+  Future<Map<DateTime, List>> _getEvents(BuildContext context) async {
+    final appts = Provider.of<Appointments>(context);
+    _events = await appts.getCalendarDateTimes(context);
+    //* DEBUG/TEST
+    // final _selectedDay = DateTime.now();
+    // await Future.delayed(const Duration(seconds: 1), () {
+    //   _events = {
+    //     _selectedDay.subtract(Duration(days: 30)): [
+    //       'Event A0',
+    //       'Event B0',
+    //       'Event C0'
+    //     ],
+    //     _selectedDay.subtract(Duration(days: 27)): ['Event A1'],
+    //     _selectedDay.subtract(Duration(days: 20)): [
+    //       'Event A2',
+    //       'Event B2',
+    //       'Event C2',
+    //       'Event D2'
+    //     ],
+    //     _selectedDay.subtract(Duration(days: 16)): ['Event A3', 'Event B3'],
+    //     _selectedDay.subtract(Duration(days: 10)): [
+    //       'Event A4',
+    //       'Event B4',
+    //       'Event C4'
+    //     ],
+    //     _selectedDay.subtract(Duration(days: 4)): [
+    //       'Event A5',
+    //       'Event B5',
+    //       'Event C5'
+    //     ],
+    //     _selectedDay.subtract(Duration(days: 2)): ['Event A6', 'Event B6'],
+    //     _selectedDay: ['Event A7', 'Event B7', 'Event C7', 'Event D7'],
+    //     _selectedDay.add(Duration(days: 1)): [
+    //       'Event A8',
+    //       'Event B8',
+    //       'Event C8',
+    //       'Event D8'
+    //     ],
+    //     _selectedDay.add(Duration(days: 3)):
+    //         Set.from(['Event A9', 'Event A9', 'Event B9']).toList(),
+    //     _selectedDay.add(Duration(days: 7)): [
+    //       'Event A10',
+    //       'Event B10',
+    //       'Event C10'
+    //     ],
+    //     _selectedDay.add(Duration(days: 11)): ['Event A11', 'Event B11'],
+    //     _selectedDay.add(Duration(days: 17)): [
+    //       'Event A12',
+    //       'Event B12',
+    //       'Event C12',
+    //       'Event D12'
+    //     ],
+    //     _selectedDay.add(Duration(days: 22)): ['Event A13', 'Event B13'],
+    //     _selectedDay.add(Duration(days: 26)): [
+    //       'Event A14',
+    //       'Event B14',
+    //       'Event C14'
+    //     ],
+    //   };
+    // });
+
+    return _events;
   }
 }

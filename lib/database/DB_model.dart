@@ -8,7 +8,7 @@ import 'package:logging/logging.dart';
 class DBRef {
   static DatabaseReference rootRef = FirebaseDatabase.instance.reference();
   static DatabaseReference readingsRef(String monitorName) =>
-      rootRef.child('readings').child(monitorName);
+      rootRef.child(monitorName).child('readings');
   static DatabaseReference memberRef(String uid) =>
       rootRef.child('members').child(uid);
   static DatabaseReference memberMonitorRef(String uid) =>
@@ -23,13 +23,14 @@ class DBRef {
 
   static DatabaseReference monitorsAvailableRef() =>
       rootRef.child('available_monitors');
-  static DatabaseReference memberMonitorStatusRef(String uid) =>
-      rootRef.child('members').child(uid).child('monitor').child('status');
+  // static DatabaseReference memberMonitorStatusRef(String uid) =>
+  //     rootRef.child('members').child(uid).child('monitor').child('status');
   static DatabaseReference availableApptsZipCodeRef(String zipcode) =>
       rootRef.child('available_appointments').child(zipcode);
   static DatabaseReference availableApptZipCodeRef(
           String zipcode, String apptNumber) =>
       rootRef.child('available_appointments').child(zipcode).child(apptNumber);
+  static DatabaseReference monitorRef(String monitor) => rootRef.child(monitor);
 }
 
 class DBHelper {

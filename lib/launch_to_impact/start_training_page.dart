@@ -20,12 +20,12 @@ import 'install_monitor/monitors_model.dart';
 import 'member_model.dart';
 import 'signin/auth_service.dart';
 
-class StartTrainingPage extends StatefulWidget with Validators {
+class EnrollPage extends StatefulWidget with Validators {
   @override
-  _StartTrainingPageState createState() => _StartTrainingPageState();
+  _EnrollPageState createState() => _EnrollPageState();
 }
 
-class _StartTrainingPageState extends State<StartTrainingPage>
+class _EnrollPageState extends State<EnrollPage>
     with AfterLayoutMixin {
   final Logger log = Logger('start_training_page.dart');
   //  expand is used to determine if the zipcode text should expand.
@@ -191,7 +191,7 @@ class _StartTrainingPageState extends State<StartTrainingPage>
       setState(() {});
       return;
     }
-    String monitor = await monitors.makeMonitorName();
+    String monitor = await monitors.makeMonitorName(member.id);
     // Each member has an associated node within the Firebase members node.  The node name is the member's uid, which is created when the Firebase account is created.
 
     bool recordCreated = await member.createRecord(

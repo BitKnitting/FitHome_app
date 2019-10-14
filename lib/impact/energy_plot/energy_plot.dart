@@ -7,6 +7,8 @@ import 'energy_reading.dart';
 import 'monitor_service.dart';
 
 class EnergyPlot extends StatefulWidget {
+  final String monitorName;
+  EnergyPlot({@required this.monitorName});
   @override
   _EnergyPlotState createState() => _EnergyPlotState();
 }
@@ -28,7 +30,7 @@ class _EnergyPlotState extends State<EnergyPlot> {
   @override
   void initState() {
     super.initState();
-    FirebaseMonitor.getReadingsStream(_onNewReading)
+    FirebaseMonitor.getReadingsStream(widget.monitorName,_onNewReading)
         .then((StreamSubscription s) => _subscriptionName = s);
 
     // Listen to the stream of incoming meter readings.

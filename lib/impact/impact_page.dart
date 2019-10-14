@@ -17,6 +17,7 @@ import 'package:fithome_app/impact/impact_stream.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/monitors_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:intl/intl.dart';
 
 import 'package:logging/logging.dart';
@@ -33,17 +34,45 @@ class ImpactPage extends StatefulWidget {
 
 class _ImpactPageState extends State<ImpactPage> {
   Logger log = Logger('impact_page.dart');
+  String title = 'Impact';
 
   @override
   Widget build(BuildContext context) {
     //*TODO: Get rest of asset pictures
     //*TODO: Build background of plot
-
-    return Column(
-      children: [
-        Flexible(child: _buildImpactSection(), flex: 3),
-        Flexible(child: _buildPlotArea(), flex: 1),
-      ],
+    final monitors = Provider.of<Monitors>(context);
+    return Scaffold(
+      appBar: AppBar(
+          title: FutureBuilder(
+              future: monitors.getInfo(context),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasData) {
+                    String _monitorState = snapshot.data['status'];
+                    switch (_monitorState) {
+                      case monitorLearning:
+                        {
+                          return Text('Learning');
+                        }
+                      case monitorNotActive:
+                        {
+                          return Text('Monitor Installation');
+                        }
+                      default:
+                        {
+                          return Text('Impact');
+                        }
+                    }
+                  }
+                }
+                return Text('');
+              })),
+      body: Column(
+        children: [
+          Flexible(child: _buildImpactSection(), flex: 2),
+          Flexible(child: _buildPlotArea(), flex: 1),
+        ],
+      ),
     );
   }
 
@@ -53,11 +82,12 @@ class _ImpactPageState extends State<ImpactPage> {
   _buildImpactSection() {
     final monitors = Provider.of<Monitors>(context);
     return FutureBuilder(
-        future: monitors.getStatus(context),
+        future: monitors.getInfo(context),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
-              switch (snapshot.data) {
+              String _monitorState = snapshot.data['status'];
+              switch (_monitorState) {
                 case monitorNotActive:
                   {
                     return Stack(
@@ -135,7 +165,7 @@ class _ImpactPageState extends State<ImpactPage> {
         });
   }
 
-  _buildImageLayer(String impactImageName) {
+  Widget _buildImageLayer(String impactImageName) {
     AssetImage assetImage = AssetImage(impactImageName);
     return Row(
       children: <Widget>[
@@ -229,7 +259,8 @@ class _ImpactPageState extends State<ImpactPage> {
         break;
       case monitorLearning:
         {
-          return _monitorLearningContent();
+          //return _monitorLearningContent();
+          return Container();
         }
         break;
     }
@@ -237,8 +268,8 @@ class _ImpactPageState extends State<ImpactPage> {
 
   //****************************************************************************** */
   /// Here we create a watch like countdown timer to let the member know how much
-  /// Time is left before the electrician comes out.  The member may need to reschedule
-  /// or cancel the appointment.
+  /// Time is left before the electrician comes out.  The member may need to cancel
+  /// the appointment.
   //****************************************************************************** */
   Widget _monitorInstallContent() {
     return Column(
@@ -302,10 +333,7 @@ class _ImpactPageState extends State<ImpactPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 30, bottom: 20),
-                child: FormSubmitButton(text: 'Reschedule', onPressed: _submit),
-              ),
+              //*TODO: handle appointment cancellation.
               Padding(
                 padding: const EdgeInsets.only(top: 30, bottom: 20),
                 child: FormSubmitButton(
@@ -323,7 +351,7 @@ class _ImpactPageState extends State<ImpactPage> {
     final appts = Provider.of<Appointments>(context);
     String appt = await appts.getAppt(context);
     // now that we have the string of the appt, get the hour, min, seconds.
-    if (appt ==null) {
+    if (appt == null) {
       log.severe('The appointment date/time field is empty');
       return null;
     }
@@ -332,9 +360,11 @@ class _ImpactPageState extends State<ImpactPage> {
 
   Widget _monitorLearningContent() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20.0, 30, 20, 0),
-      child: CountdownTimer(
-          title: 'Learning completed in', day: 1, hour: 10, min: 20),
+      padding: const EdgeInsets.fromLTRB(20.0, 300, 20, 0),
+      child: SpinKitWave(
+        color: Colors.black,
+        size: 50.0,
+      ),
     );
   }
 
@@ -371,11 +401,13 @@ class _ImpactPageState extends State<ImpactPage> {
   _buildPlotArea() {
     final monitors = Provider.of<Monitors>(context);
     return FutureBuilder(
-        future: monitors.getStatus(context),
+        future: monitors.getInfo(context),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
-              switch (snapshot.data) {
+              String _monitorStatus = snapshot.data['status'];
+              String _monitorName = snapshot.data['name'];
+              switch (_monitorStatus) {
                 case monitorNotActive:
                   {
                     return _buildMonitorInstallWaitingPlot();
@@ -384,7 +416,7 @@ class _ImpactPageState extends State<ImpactPage> {
                 case monitorLearning:
                 case monitorActive:
                   {
-                    return EnergyPlot();
+                    return EnergyPlot(monitorName: _monitorName);
                   }
                 //* If we get here, we're in an unexpected monitor status state (most
                 //* likely a status of start)
@@ -506,7 +538,8 @@ class _buildMonitorInstallWaitingPlot extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        EnergyPlot(),
+        //*TODO - This is most likely not a great layout.
+        //EnergyPlot(),
         Center(
           child: Container(
             color: Colors.grey.withOpacity(.6),

@@ -22,7 +22,7 @@ class _NavigationPageState extends State<NavigationPage> {
   int _cIndex = 0;
   bool trainingPageAvailable = false;
 
-  final List<Widget> _pageList = [ImpactPage(), TrainingPage(), ContactPage()];
+  final List<Widget> _pageList = [ImpactPage(), InsightPage(), ContactPage()];
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +41,12 @@ class _NavigationPageState extends State<NavigationPage> {
       body: _pageList[_cIndex],
       //child: Container(color: Colors.white),
       bottomNavigationBar: FutureBuilder(
-          future: monitors.getStatus(context),
+          future: monitors.getInfo(context),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasData) {
-                if (snapshot.data == monitorActive) {
+                String _monitorState = snapshot.data['status'];
+                if (_monitorState == monitorActive) {
                   trainingPageAvailable = true;
                 } else {
                   trainingPageAvailable = false;

@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'install_monitor/monitors_model.dart';
 import 'signin/auth_service.dart';
 
-enum UserState { unknown, waitlist, start_training, member ,memberNoInstallDate}
+enum UserState { unknown, waitlist, enroll, member ,memberNoInstallDate}
 
 class LaunchCheck {
   final Logger log = Logger('launch_check.dart');
@@ -81,7 +81,7 @@ class LaunchCheck {
         // This means there is a monitor available and the use is not a member.  Go to the start training page.
         log.info('A monitor is available.');
       }
-      return UserState.start_training;
+      return UserState.enroll;
     } else {
       var _installDateTime =
           await DBHelper().getData(dbRef: DBRef.memberInstallDateTimeRef(_memberUid));
