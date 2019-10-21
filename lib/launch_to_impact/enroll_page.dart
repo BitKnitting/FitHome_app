@@ -25,9 +25,8 @@ class EnrollPage extends StatefulWidget with Validators {
   _EnrollPageState createState() => _EnrollPageState();
 }
 
-class _EnrollPageState extends State<EnrollPage>
-    with AfterLayoutMixin {
-  final Logger log = Logger('start_training_page.dart');
+class _EnrollPageState extends State<EnrollPage> with AfterLayoutMixin {
+  final Logger log = Logger('enroll_page.dart');
   //  expand is used to determine if the zipcode text should expand.
   // afterFirstLayout gets called after the widgets have been built.
   // It is part of the AfterLayoutMixin.
@@ -369,18 +368,18 @@ class _EnrollPageState extends State<EnrollPage>
   //********************************************************************** */
   @override
   Widget build(BuildContext context) {
-     return Scaffold(
-      appBar: AppBar(
-        title: Text('Member Registration'),
-      ),
-      body: ListView(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
-          child: _buildStartTrainingForm(),
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Member Registration'),
         ),
-      ],
-    ));
+        body: ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+              child: _buildStartTrainingForm(),
+            ),
+          ],
+        ));
   }
 
   _checkExpandText() {

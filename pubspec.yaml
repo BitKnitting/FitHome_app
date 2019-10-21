@@ -79,6 +79,8 @@ flutter:
     - assets/impactImages/icons/money_icon.png
     - assets/impactImages/icons/tree_icon.png
     - assets/impactImages/icons/oil_icon.png
+    - assets/insightsImages/drippingFaucet.png
+    - assets/insightsImages/star.png
   #  - images/a_dot_burr.jpeg
   #  - images/a_dot_ham.jpeg
 

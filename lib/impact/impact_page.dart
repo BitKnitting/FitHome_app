@@ -11,6 +11,7 @@ import 'dart:ui';
 
 import 'package:fithome_app/common_code/form_submit_button.dart';
 import 'package:fithome_app/common_code/globals.dart';
+import 'package:fithome_app/common_code/image_feed_utils.dart';
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
 import 'package:fithome_app/impact/countdown_timer/countdown_timer.dart';
 import 'package:fithome_app/impact/impact_stream.dart';
@@ -22,7 +23,6 @@ import 'package:intl/intl.dart';
 
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:transparent_image/transparent_image.dart';
 
 import 'energy_plot/energy_plot.dart';
 import 'impact_content.dart';
@@ -92,7 +92,7 @@ class _ImpactPageState extends State<ImpactPage> {
                   {
                     return Stack(
                       children: <Widget>[
-                        _buildImageLayer('assets/misc/female-electrician.png'),
+                        buildImageLayer('assets/misc/female-electrician.png'),
                         _buildMonitorLayer(monitorStatus: monitorNotActive),
                       ],
                     );
@@ -103,7 +103,7 @@ class _ImpactPageState extends State<ImpactPage> {
                   {
                     return Stack(
                       children: <Widget>[
-                        _buildImageLayer('assets/misc/histogram.gif'),
+                        buildImageLayer('assets/misc/histogram.gif'),
                         _buildMonitorLayer(monitorStatus: monitorLearning),
                       ],
                     );
@@ -126,7 +126,7 @@ class _ImpactPageState extends State<ImpactPage> {
                                   // The data is the asset path. Build the Active content section of the page.
                                   return Stack(
                                     children: <Widget>[
-                                      _buildImageLayer(snapshot.data),
+                                      buildImageLayer(snapshot.data),
                                       _buildMonitorLayer(
                                           monitorStatus: monitorActive,
                                           impactImage: snapshot.data),
@@ -165,20 +165,7 @@ class _ImpactPageState extends State<ImpactPage> {
         });
   }
 
-  Widget _buildImageLayer(String impactImageName) {
-    AssetImage assetImage = AssetImage(impactImageName);
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: FadeInImage(
-            placeholder: MemoryImage(kTransparentImage),
-            image: assetImage,
-            fit: BoxFit.fill,
-          ),
-        ),
-      ],
-    );
-  }
+  
 
   //************************************************************************** */
   //* Put a monitor card on top of the image.  Fill the contents of the card
