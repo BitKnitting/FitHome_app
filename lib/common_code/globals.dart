@@ -8,5 +8,3 @@ const monitorLearning = 'learning';
 const impactMoney = 'money';
 const impactTree = 'tree';
 const impactOil = 'oil';
-
-

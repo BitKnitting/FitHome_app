@@ -9,6 +9,7 @@ import '../member_model.dart';
 class Monitors {
   Logger log = Logger('monitors_model.dart');
   String _monitorFullName;
+  Map _monitorInfo = Map();
 
   //**************************************************************************
   //* IF there is a monitor available in Firebase, get it and change the monitor's
@@ -61,11 +62,17 @@ class Monitors {
   ///******************************************************************** */
   /// Once a homeowner has scheduled an appointment, the monitor can be
   /// in UI states:
+  /// (see globals.dart)
   /// * not_active - The homeowner has filled out the information FitHome needs to create a member.
-  /// * learn - The monitor has been installed.  It is gathering data so that the system can personalize electricity savings advice.
+  /// * learning - The monitor has been installed.  It is gathering data so that the system can personalize electricity savings advice.
   /// * active - Enough learning data has been gathered to make initial personalized electricity savings recommendations.
   //******************************************************************** */
   Future<Map> getInfo(BuildContext context) async {
+    // We may already have the monitor info.
+    if (_monitorInfo.isNotEmpty) {
+      print('have monitor info: $_monitorInfo');
+      return _monitorInfo;
+    }
     // We need to get the homeowner's uid.
     final member = Provider.of<Member>(context);
     await member.getValues();
@@ -77,7 +84,7 @@ class Monitors {
     } else {
       log.info('The member id is: $id');
     }
-    Map _monitorInfo = await DBHelper().getData(
+    _monitorInfo = await DBHelper().getData(
       dbRef: DBRef.memberMonitorRef(id),
     );
     return _monitorInfo;

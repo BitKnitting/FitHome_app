@@ -28,6 +28,8 @@ import 'energy_plot/energy_plot.dart';
 import 'impact_content.dart';
 
 class ImpactPage extends StatefulWidget {
+  ImpactPage({this.state});
+  final String state;
   @override
   _ImpactPageState createState() => _ImpactPageState();
 }
@@ -40,33 +42,11 @@ class _ImpactPageState extends State<ImpactPage> {
   Widget build(BuildContext context) {
     //*TODO: Get rest of asset pictures
     //*TODO: Build background of plot
-    final monitors = Provider.of<Monitors>(context);
     return Scaffold(
+      //  Set the title based on the state of the monitor.
       appBar: AppBar(
-          title: FutureBuilder(
-              future: monitors.getInfo(context),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (snapshot.hasData) {
-                    String _monitorState = snapshot.data['status'];
-                    switch (_monitorState) {
-                      case monitorLearning:
-                        {
-                          return Text('Learning');
-                        }
-                      case monitorNotActive:
-                        {
-                          return Text('Monitor Installation');
-                        }
-                      default:
-                        {
-                          return Text('Impact');
-                        }
-                    }
-                  }
-                }
-                return Text('');
-              })),
+        title: _setTitle(widget.state),
+      ),
       body: Column(
         children: [
           Flexible(child: _buildImpactSection(), flex: 2),
@@ -77,95 +57,77 @@ class _ImpactPageState extends State<ImpactPage> {
   }
 
   //
-  // The impact images will be updated by the impactImpageSteam
+  // What is shown is based on the status of the monitor.
   //
-  _buildImpactSection() {
-    final monitors = Provider.of<Monitors>(context);
-    return FutureBuilder(
-        future: monitors.getInfo(context),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasData) {
-              String _monitorState = snapshot.data['status'];
-              switch (_monitorState) {
-                case monitorNotActive:
-                  {
-                    return Stack(
-                      children: <Widget>[
-                        buildImageLayer('assets/misc/female-electrician.png'),
-                        _buildMonitorLayer(monitorStatus: monitorNotActive),
-                      ],
-                    );
-                  }
+  Widget _buildImpactSection() {
+    switch (widget.state) {
+      case monitorNotActive:
+        {
+          return Stack(
+            children: <Widget>[
+              buildImageLayer('assets/misc/female-electrician.png'),
+              _buildMonitorLayer(monitorStatus: monitorNotActive),
+            ],
+          );
+        }
 
-                  break;
-                case monitorLearning:
-                  {
-                    return Stack(
-                      children: <Widget>[
-                        buildImageLayer('assets/misc/histogram.gif'),
-                        _buildMonitorLayer(monitorStatus: monitorLearning),
-                      ],
-                    );
-                  }
-                  break;
-                // When the monitor is active, the impact image changes.  When the impact image changes, the card showing the
-                // impact the homewoner is making changes to reflect the equivalency.
-                case monitorActive:
-                  {
-                    // There is a ranking stacked on top of the layers related to electricity use.
-                    return Stack(
-                      children: <Widget>[
-                        StreamBuilder(
-                            // A path to one of the image assets has been put in the impactImages Stream
-                            stream: ImpactImages().stream,
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.active) {
-                                if (snapshot.hasData) {
-                                  // The data is the asset path. Build the Active content section of the page.
-                                  return Stack(
-                                    children: <Widget>[
-                                      buildImageLayer(snapshot.data),
-                                      _buildMonitorLayer(
-                                          monitorStatus: monitorActive,
-                                          impactImage: snapshot.data),
-                                    ],
-                                  );
-                                } else if (snapshot.hasError) {
-                                  log.severe('!!! ERROR: ${snapshot.error}');
-                                }
-                              } else {
-                                return Center(
-                                    child: CircularProgressIndicator());
-                              }
-                            }),
-                        _buildRanking(),
-                        _buildTotalElectricitySaved(),
-                      ],
-                    );
-                  }
-                  break;
-                //  If we get here, the member is in a state that isn't supported by ImpactPage. For example,
-                //  If the status of the member shows start, they don't have a monitor installed yet.
-                default:
-                  {
-                    log.severe(
-                        '!!! Error.  The expected status was either monitorActive, monitorLearning, monitorInstall.  The status is ${snapshot.data} (see globals.dart)');
-                    return _handleStatusError();
-                  }
-                  break;
-              }
-            } else {
-              return Text('');
-            }
-          } else {
-            return Text('');
-          }
-        });
+        break;
+      case monitorLearning:
+        {
+          return Stack(
+            children: <Widget>[
+              buildImageLayer('assets/misc/histogram.gif'),
+              _buildMonitorLayer(monitorStatus: monitorLearning),
+            ],
+          );
+        }
+        break;
+      // When the monitor is active, the impact image changes.  When the impact image changes, the card showing the
+      // impact the homewoner is making changes to reflect the equivalency.
+      case monitorActive:
+        {
+          // There is a ranking stacked on top of the layers related to electricity use.
+          return Stack(
+            children: <Widget>[
+              StreamBuilder(
+                  // A path to one of the image assets has been put in the impactImages Stream
+                  stream: ImpactImages().stream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.active) {
+                      if (snapshot.hasData) {
+                        // The data is the asset path. Build the Active content section of the page.
+                        return Stack(
+                          children: <Widget>[
+                            buildImageLayer(snapshot.data),
+                            _buildMonitorLayer(
+                                monitorStatus: monitorActive,
+                                impactImage: snapshot.data),
+                          ],
+                        );
+                      } else if (snapshot.hasError) {
+                        log.severe('!!! ERROR: ${snapshot.error}');
+                      }
+                    } else {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                  }),
+              _buildRanking(),
+              _buildTotalElectricitySaved(),
+            ],
+          );
+        }
+        break;
+      //  If we get here, the member is in a state that isn't supported by ImpactPage. For example,
+      //  If the status of the member shows start, they don't have a monitor installed yet.
+      default:
+        {
+          log.severe(
+              '!!! Error.  The expected status was either monitorActive, monitorLearning, monitorInstall.  (see globals.dart)');
+          return _handleStatusError();
+        }
+        break;
+    }
   }
-
-  
 
   //************************************************************************** */
   //* Put a monitor card on top of the image.  Fill the contents of the card
@@ -502,10 +464,10 @@ class _ImpactPageState extends State<ImpactPage> {
     );
   }
 
-//******************************************************************** */
-//* This method is called when the monitor status returned from the db
-//*TODO: The app shows a start status, but we're on impactPage code...
-//*TODO: Handle this error with getting action then ...
+  //******************************************************************** */
+  //* This method is called when the monitor status returned from the db
+  //*TODO: The app shows a start status, but we're on impactPage code...
+  //*TODO: Handle this error with getting action then ...
   Widget _handleStatusError() {
     return PlatformAlertDialog(
       title: 'Account Error',
@@ -513,6 +475,32 @@ class _ImpactPageState extends State<ImpactPage> {
       defaultActionText: 'YES',
       cancelActionText: 'NO',
     );
+  }
+
+  Widget _setTitle(String state) {
+    String title = '';
+
+    switch (state) {
+      case monitorNotActive:
+        {
+          title = 'Monitor is not Active';
+        }
+        break;
+      case monitorLearning:
+        {
+          title = 'Learning';
+        }
+        break;
+
+      case monitorActive:
+        {
+          title = 'Active';
+        }
+        break;
+      default:
+        break;
+    }
+    return Text(title);
   }
 }
 

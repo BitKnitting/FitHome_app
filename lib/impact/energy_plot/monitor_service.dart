@@ -54,13 +54,25 @@ class DummyMonitor implements MonitorBase {
 class FirebaseMonitor {
   static Future<StreamSubscription<Event>> getReadingsStream(
       String monitorName, void onData(var reading)) async {
+    //* TODO = see about starting at newest.
+    // NOTE: http://bit.ly/2pmvGGs
+    // The doc states onChildAdded once FOR EACH EXISTING CHILD and
+    // then AGAIN EVERY TIME A NEW CHILD IS ADDED.
+    // We want to retrieve only new energy readings for the plot.
+
     final DatabaseReference _readingsRef = DBRef.readingsRef(monitorName);
+    // We're setting up our stream subscription.  The challenge is we want
+    // only the latest readings.  Whereas onChildAdded will return all readings.
+    // To limit to the latest, we first get the last two readings in Firebase.
+    var data = await DBHelper().getData(dbRef: _readingsRef.limitToLast(2));
+    // Then we get the earlier key and set a query for readings to start
+    // At this entry.
+    Query _query = _readingsRef.orderByKey().startAt(data.keys.first);
     final StreamSubscription<Event> readSubscription =
-        _readingsRef.onChildAdded.listen((event) {
+        _query.onChildAdded.listen((event) {
       var watts = event.snapshot.value["P"];
       DateTime datetime = DateTime.fromMillisecondsSinceEpoch(
           int.parse(event.snapshot.key) * 1000);
-      print('watts: $watts  datetime: $datetime');
       if (watts == null) {
         onData(EnergyReading(dateTime: DateTime.now(), watts: 0));
       } else {

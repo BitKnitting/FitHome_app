@@ -30,7 +30,7 @@ class _EnergyPlotState extends State<EnergyPlot> {
   @override
   void initState() {
     super.initState();
-    FirebaseMonitor.getReadingsStream(widget.monitorName,_onNewReading)
+    FirebaseMonitor.getReadingsStream(widget.monitorName, _onNewReading)
         .then((StreamSubscription s) => _subscriptionName = s);
 
     // Listen to the stream of incoming meter readings.
@@ -52,8 +52,7 @@ class _EnergyPlotState extends State<EnergyPlot> {
 
   @override
   Widget build(BuildContext context) {
-    _buildXY();
-    return energyLine;
+    return _buildXY();
   }
 
   //
@@ -61,31 +60,36 @@ class _EnergyPlotState extends State<EnergyPlot> {
   // Encapsulates setting up the series and energyLine
   // variables.
   //
-  void _buildXY() {
+  Widget _buildXY() {
     // Set the x/y info of the time series.
     // Check to see if there are any energy readings.
     //*TODO: More detailed handling.  Here I just don't want to get null returned.
-    if (energyReadings.isEmpty) {
-      for (int i = 0; i < 9; i++) {
-        energyReadings.add(EnergyReading(dateTime: DateTime.now(), watts: 0));
-      }
+    if (energyReadings.isNotEmpty) {
+      // for (int i = 0; i < 9; i++) {
+      //   energyReadings.add(EnergyReading(dateTime: DateTime.now(), watts: 0));
+      // }
+
+      series = [
+        charts.Series(
+          id: 'Energy Readings',
+          colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+          //  x-axis = time series
+          domainFn: (EnergyReading reading, _) => reading.dateTime,
+          // y-axis = watt measurement at the time.
+          measureFn: (EnergyReading reading, _) => reading.watts,
+          data: energyReadings,
+        ),
+      ];
+      // Create a time series chart
+      return charts.TimeSeriesChart(
+        series,
+        animate: true,
+      );
+    } else {
+      return Container(
+        child: CircularProgressIndicator(),
+      );
     }
-    series = [
-      charts.Series(
-        id: 'Energy Readings',
-        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-        //  x-axis = time series
-        domainFn: (EnergyReading reading, _) => reading.dateTime,
-        // y-axis = watt measurement at the time.
-        measureFn: (EnergyReading reading, _) => reading.watts,
-        data: energyReadings,
-      ),
-    ];
-    // Create a time series chart
-    energyLine = charts.TimeSeriesChart(
-      series,
-      animate: true,
-    );
   }
 
   void _onNewReading(reading) {

@@ -1,12 +1,11 @@
-import 'package:fithome_app/insight/leaks_page.dart';
+
 import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/monitors_model.dart';
-import 'package:fithome_app/launch_to_impact/launch_page.dart';
+import 'package:fithome_app/navigation_page.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'launch_to_impact/install_monitor/appts_model.dart';
-
 // We are using the Provider package to pass around member info state
 // between widgets below the MaterialApp Widget
 import 'package:provider/provider.dart';
@@ -47,7 +46,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.blue,
           ),
-          home: LeaksPage()),
+          home: NavigationPage()),
     );
   }
 }

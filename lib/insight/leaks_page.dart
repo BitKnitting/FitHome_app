@@ -47,7 +47,6 @@ class _LeaksPageState extends State<LeaksPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: <Widget>[
                       _leakWatts(161),
-                      _ranking(12, 2),
                     ],
                   ),
                 ),
@@ -181,46 +180,6 @@ class _LeaksPageState extends State<LeaksPage> {
       letterSpacing: 0.357,
       fontFamily: "Roboto",
       fontWeight: FontWeight.w500,
-    );
-  }
-
-  // ************************************************************************************************
-  // How low the homeowner's leaking is relative to everyone else.
-  // ************************************************************************************************
-  _ranking(int rank, int percentFromTop10) {
-    return Column(
-      children: <Widget>[
-        Container(
-          width: 81,
-          height: 76,
-          margin: EdgeInsets.only(left: 20),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                child: Image.asset('assets/insightsImages/star.png',
-                    width: 67.0, height: 71.0),
-              ),
-              Positioned(
-                left: 22,
-                top: 25,
-                child: Text(
-                  rank.toString(),
-                  style: _commonTextStyle(),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 10),
-        Text(
-          percentFromTop10.toString() + '% from top 10!',
-          style: _commonTextStyle(),
-        ),
-      ],
     );
   }
 
