@@ -24,6 +24,7 @@ class _NavigationPageState extends State<NavigationPage> {
   Widget build(BuildContext context) {
     final monitors = Provider.of<Monitors>(context);
     String activityState = '';
+    String monitorName = '';
 
     _setTab(index) {
       setState(() {
@@ -41,7 +42,8 @@ class _NavigationPageState extends State<NavigationPage> {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               activityState = snapshot.data['status'];
-              return _getPage(activityState, _cIndex);
+              monitorName = snapshot.data['name'];
+              return _getPage(monitorName,activityState, _cIndex);
             } else {
               return Scaffold(
                 body: Center(
@@ -79,15 +81,15 @@ class _NavigationPageState extends State<NavigationPage> {
     );
   }
 
-  Widget _getPage(String activityState, int cIndex) {
+  Widget _getPage(String monitorName,String activityState, int cIndex) {
     // Whatever the monitor state, the impact page is available.
     if (cIndex == 0) {
-      return ImpactPage(state: activityState);
+      return ImpactPage(monitorName:monitorName,state: activityState);
     }
     // If the monitor isn't actively giving feedback, don't show Insight
     if (cIndex == 1) {
       if (activityState != monitorActive) {
-        return ImpactPage(state: activityState);
+        return ImpactPage(monitorName:monitorName, state: activityState);
       } else {
         return InsightPage();
       }

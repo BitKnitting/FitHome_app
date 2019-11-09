@@ -13,6 +13,7 @@ import 'package:fithome_app/common_code/form_submit_button.dart';
 import 'package:fithome_app/common_code/globals.dart';
 import 'package:fithome_app/common_code/image_feed_utils.dart';
 import 'package:fithome_app/common_code/platform_alert_dialog.dart';
+import 'package:fithome_app/database/DB_model.dart';
 import 'package:fithome_app/impact/countdown_timer/countdown_timer.dart';
 import 'package:fithome_app/impact/impact_stream.dart';
 import 'package:fithome_app/launch_to_impact/install_monitor/appts_model.dart';
@@ -28,8 +29,10 @@ import 'energy_plot/energy_plot.dart';
 import 'impact_content.dart';
 
 class ImpactPage extends StatefulWidget {
-  ImpactPage({this.state});
+  ImpactPage({@required this.monitorName, @required this.state});
+  //*TODO: Sometimes just use as globals.  Sometimes pass into methods...
   final String state;
+  final String monitorName;
   @override
   _ImpactPageState createState() => _ImpactPageState();
 }
@@ -41,7 +44,7 @@ class _ImpactPageState extends State<ImpactPage> {
   @override
   Widget build(BuildContext context) {
     //*TODO: Get rest of asset pictures
-    //*TODO: Build background of plot
+
     return Scaffold(
       //  Set the title based on the state of the monitor.
       appBar: AppBar(
@@ -111,8 +114,9 @@ class _ImpactPageState extends State<ImpactPage> {
                       return Center(child: CircularProgressIndicator());
                     }
                   }),
-              _buildRanking(),
-              _buildTotalElectricitySaved(),
+              // Inform the user on their baseline daily average electricity use
+              // and their last 24 hours of electricity use.
+              _buildDailyAvg(),
             ],
           );
         }
@@ -348,118 +352,126 @@ class _ImpactPageState extends State<ImpactPage> {
   //* Build the energy line plot based on incoming readings from the monitor.
   //************************************************************************** */
   _buildPlotArea() {
-    final monitors = Provider.of<Monitors>(context);
-    return FutureBuilder(
-        future: monitors.getInfo(context),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasData) {
-              String _monitorStatus = snapshot.data['status'];
-              String _monitorName = snapshot.data['name'];
-              switch (_monitorStatus) {
-                case monitorNotActive:
-                  {
-                    return _buildMonitorInstallWaitingPlot();
-                  }
-                  break;
-                case monitorLearning:
-                case monitorActive:
-                  {
-                    return EnergyPlot(monitorName: _monitorName);
-                  }
-                //* If we get here, we're in an unexpected monitor status state (most
-                //* likely a status of start)
-                default:
-                  return Center(
-                    child: Container(
-                      color: Colors.grey.withOpacity(.6),
-                      child: new Text(
-                        "OOPs....",
-                        style: TextStyle(
-                            fontSize: 18.0, fontWeight: FontWeight.bold),
-                      ),
-                      alignment: Alignment(0.0, 0.0),
-                    ),
-                  );
-              }
-            }
-          } else {
-            return Text('');
-          }
-        });
+    switch (widget.state) {
+      case monitorNotActive:
+        {
+          return _buildMonitorInstallWaitingPlot();
+        }
+        break;
+      case monitorLearning:
+      case monitorActive:
+        {
+          return EnergyPlot(monitorName: widget.monitorName);
+        }
+      //* If we get here, we're in an unexpected monitor status state (most
+      //* likely a status of start)
+      default:
+        return Center(
+          child: Container(
+            color: Colors.grey.withOpacity(.6),
+            child: new Text(
+              "OOPs....",
+              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+            ),
+            alignment: Alignment(0.0, 0.0),
+          ),
+        );
+    }
   }
 
   //************************************************************************** */
-  //* The homeowner's ranking relative to other FitHome trainees is placed on
-  //* The upper right hand corner of the image.
+  //* Build the daily average baseline electricity use
+  //* The total amount of electricity saved by all FitHome participants (from the
+  //* beginning of the program until right now).
   //************************************************************************** */
-  Widget _buildRanking() {
+  _buildDailyAvg() {
+    return (FutureBuilder(
+        future: _getDailyAvg(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              Map baselineKWh = snapshot.data;
+              return _drawBoxes(baselineKWh['daily_baseline'],baselineKWh['leakage_baseline']);
+            }
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        }));
+  }
+
+  Widget _drawBoxes(int dailyKWh, int leakageKWh) {
     return Positioned(
-      top: 10,
-      right: 10,
-      child: Stack(
-        children: [
-          Container(
-            alignment: Alignment(0, 0),
-            height: 90,
-            width: 90,
-            decoration: BoxDecoration(
-                color: Colors.green[700],
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey,
-                    offset: Offset(5, 5),
-                    blurRadius: 5,
-                  )
-                ]),
-            child: Text(
-              '33',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 40),
-            ),
-          ),
+      top: 15,
+      left: 10,
+      child: Column(
+        children: <Widget>[
+          _avgDailyBox(true,dailyKWh),
+          _avgDailyBox(false,leakageKWh),
         ],
       ),
     );
   }
 
-  //************************************************************************** */
-  //* The total amount of electricity saved by all FitHome participants (from the
-  //* beginning of the program until right now).
-  //************************************************************************** */
-  _buildTotalElectricitySaved() {
-    return Positioned(
-      top: 15,
-      left: 10,
-      child: Stack(
-        children: [
-          Container(
-            alignment: Alignment(0, 0),
-            height: 80,
-            width: 300,
-            decoration: BoxDecoration(
-                color: Colors.green[700],
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.circular(10.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey,
-                    offset: Offset(5, 5),
-                    blurRadius: 5,
-                  )
-                ]),
-            child: Text(
-              '12.9 kWh',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 40),
-            ),
+  // ******************************************************************
+  // The _avgDailyBox widget is here to draw too "boxes" of info on the
+  // impact screen. 1) The baseline daily average electricity use in kWh.
+  // 2) The amount of average electricity used in the past 24 hours =
+  // also in kWh.
+  // The baseline box is always filled with the grey color.
+  // The last 24 hour box will be either:
+  // green: the last 24 hours was less than the baseline.  YAY!
+  // grey: the last 24 hours was about the same as the baseline.  OK...but
+  // red: the last 24 hours was above the baseline.  BOO!
+  //******************************************************************* */
+  Widget _avgDailyBox(bool isBaseline,int avgKWh) {
+    // Get the baseline value from the db.
+
+    //   _monitorInfo = await DBHelper().getData(
+    // dbRef: DBRef.memberMonitorRef(id),
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(50, 0, 0, 10),
+      // The container is the box.
+      child: Container(
+        alignment: Alignment(0, 0),
+        height: 80,
+        width: 300,
+        decoration: BoxDecoration(
+            color: Colors.grey[700],
+            shape: BoxShape.rectangle,
+            borderRadius: BorderRadius.circular(10.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey,
+                offset: Offset(5, 5),
+                blurRadius: 5,
+              )
+            ]),
+        // The box contains two lines of text.
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+          child: Column(
+            children: <Widget>[
+              Text(
+                '21.0 kWh',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 30),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+                child: Text(
+                  isBaseline ? 'Baseline Daily Average' : 'Last 24 Hours',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[400],
+                      fontSize: 15),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -477,6 +489,9 @@ class _ImpactPageState extends State<ImpactPage> {
     );
   }
 
+  //******************************************************************** */
+  //* Set the page's title based on the monitor's state.
+  //******************************************************************** */
   Widget _setTitle(String state) {
     String title = '';
 
@@ -501,6 +516,10 @@ class _ImpactPageState extends State<ImpactPage> {
         break;
     }
     return Text(title);
+  }
+
+  _getDailyAvg() async {
+    return await DBHelper().getData(dbRef: DBRef.insightsRef(widget.monitorName));
   }
 }
 

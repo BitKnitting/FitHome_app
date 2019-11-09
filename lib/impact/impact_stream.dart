@@ -20,7 +20,7 @@ class ImpactImages {
     _controller.sink.add(_getRandomImpactImage());
   }
 
-  void displose() {
+  void dispose() {
     _controller.close();
   }
 

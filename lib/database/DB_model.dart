@@ -31,6 +31,7 @@ class DBRef {
           String zipcode, String apptNumber) =>
       rootRef.child('available_appointments').child(zipcode).child(apptNumber);
   static DatabaseReference monitorRef(String monitor) => rootRef.child(monitor);
+  static DatabaseReference insightsRef(String monitor) => rootRef.child(monitor).child('insights');
 }
 
 class DBHelper {
