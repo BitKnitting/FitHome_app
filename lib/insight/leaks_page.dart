@@ -1,6 +1,5 @@
 import 'package:fithome_app/common_code/custom_raised_button.dart';
-import 'package:fithome_app/common_code/image_feed_utils.dart';
-import 'package:fithome_app/impact/impact_content.dart';
+
 import 'package:fithome_app/impact/impact_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
@@ -211,7 +210,7 @@ class _LeaksPageState extends State<LeaksPage> {
                 'Yearly impact',
                 style: _commonTextStyle(),
               ),
-              impactEquivalent(context, 4052, imagePath),
+              // impactEquivalent(context, 4052, imagePath),
             ],
           )
         ],

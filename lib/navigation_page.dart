@@ -8,6 +8,9 @@ import 'package:fithome_app/insight/insight_page.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+import 'impact/impact_active_page.dart';
+import 'impact/impact_learning_page.dart';
+import 'impact/impact_not_active_page.dart';
 import 'impact/impact_page.dart';
 import 'launch_to_impact/install_monitor/monitors_model.dart';
 
@@ -18,7 +21,10 @@ class NavigationPage extends StatefulWidget {
 
 class _NavigationPageState extends State<NavigationPage> {
   Logger log = Logger('navigation_page.dart');
-  int _cIndex = 0;
+  static const _ImpactPage = 0;
+  static const _InsightPage = 1;
+  static const _ContactPage = 2;
+  int _cIndex = _ImpactPage;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +35,10 @@ class _NavigationPageState extends State<NavigationPage> {
     _setTab(index) {
       setState(() {
         print('index: $index');
-        _cIndex = index == 1 && activityState != monitorActive ? 0 : index;
+        // Only when the monitor is active will the InsightPage be shown.
+        _cIndex = index == _InsightPage && activityState != monitorActive
+            ? _ImpactPage
+            : index;
 
         print('_cIndex: $_cIndex');
       });
@@ -43,7 +52,7 @@ class _NavigationPageState extends State<NavigationPage> {
             if (snapshot.hasData) {
               activityState = snapshot.data['status'];
               monitorName = snapshot.data['name'];
-              return _getPage(monitorName,activityState, _cIndex);
+              return _getPage(monitorName, activityState, _cIndex);
             } else {
               return Scaffold(
                 body: Center(
@@ -81,20 +90,28 @@ class _NavigationPageState extends State<NavigationPage> {
     );
   }
 
-  Widget _getPage(String monitorName,String activityState, int cIndex) {
+  //****************************************************************************** */
+  /// cIndex lets us know what Bottom Navigation icon was tapped.
+  /// Insights are only relevant when the monitor is in the active state.  If the
+  /// homeowner clicks on Insights and the monitor is not in the active state, the
+  /// homeowner is shown an Impact screen for either learning or not active.
+  //****************************************************************************** */
+  Widget _getPage(String monitorName, String activityState, int cIndex) {
     // Whatever the monitor state, the impact page is available.
-    if (cIndex == 0) {
-      return ImpactPage(monitorName:monitorName,state: activityState);
+    if (cIndex == _ImpactPage) {
+      //return ImpactPage(state: activityState);
+      return ImpactActivePage(monitorName:monitorName);
     }
     // If the monitor isn't actively giving feedback, don't show Insight
-    if (cIndex == 1) {
+    if (cIndex == _InsightPage) {
       if (activityState != monitorActive) {
-        return ImpactPage(monitorName:monitorName, state: activityState);
+        //return ImpactPage(state: activityState);
+        return ImpactNotActivePage();
       } else {
         return InsightPage();
       }
     }
-    if (cIndex == 2) {
+    if (cIndex == _ContactPage) {
       return ContactPage();
     }
     // Shouldn't reach here.

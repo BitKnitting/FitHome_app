@@ -1,10 +1,9 @@
 //
 // A widget that builds a timeseries plot of energy readings.
+import 'package:fithome_app/impact/energy_plot/mock_energy_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
-import 'dart:async';
 import 'energy_reading.dart';
-import 'monitor_service.dart';
 
 class EnergyPlot extends StatefulWidget {
   final String monitorName;
@@ -16,22 +15,22 @@ class EnergyPlot extends StatefulWidget {
 class _EnergyPlotState extends State<EnergyPlot> {
   List<EnergyReading> energyReadings = [];
   Widget energyLine;
+  //************************************************************************** */
+  //* MockEnergyStream uses dummy data to feed the plot.
+  //* FirebaseEnergyStream gets real time updates from Firebase.
+  //************************************************************************** */  
+  MockEnergyStream energyStream = MockEnergyStream();
   var series;
-  final DummyMonitor monitor = DummyMonitor(sampleTime: 2);
-  StreamSubscription _subscriptionName;
   @override
   void dispose() {
-    if (_subscriptionName != null) {
-      _subscriptionName.cancel();
-    }
+    energyStream.closeReadingsStream();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    FirebaseMonitor.getReadingsStream(widget.monitorName, _onNewReading)
-        .then((StreamSubscription s) => _subscriptionName = s);
+    energyStream.startReadingsStream(widget.monitorName, _onNewReading);
 
     // Listen to the stream of incoming meter readings.
     // Stream<EnergyReading> readingStream = monitor.readings();
