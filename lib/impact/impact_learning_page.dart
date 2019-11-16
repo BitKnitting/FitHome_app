@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'impact_page.dart';
-import 'impact_widgets.dart';
+import 'impact_utils.dart';
+
 
 class ImpactLearningPage extends ImpactPage {
   final Logger log = Logger('impact_learning_page.dart');
@@ -24,7 +25,7 @@ class ImpactLearningPage extends ImpactPage {
   }
 
   @override
-  Widget buildPlotSection(BuildContext context) {
+  Widget buildActionSection(BuildContext context) {
     return Center(
       child: Container(
         color: Colors.grey[300],

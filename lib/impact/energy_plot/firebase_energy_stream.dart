@@ -4,9 +4,10 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:fithome_app/database/DB_model.dart';
 
 import 'energy_reading.dart';
-import 'energy_stream.dart';
+//*TODO: Put in similar code to what is in MockEnergyStream once
+// real results are being used.
 
-class FirebaseEnergyStream extends EnergyStream {
+class FirebaseEnergyStream  {
   Future startReadingsStream(
       // Data is randomly generated...
       // The monitorName is not used.

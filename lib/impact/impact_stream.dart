@@ -1,43 +1,8 @@
 import 'dart:async';
 
 import 'dart:math';
-
-class ImpactImages {
-  final _controller = StreamController<String>();
-  Stream<String> get stream => _controller.stream;
-  final int imageUpdateDuration = 5;
-  Timer timer;
-  List<String> _impactImageList = [];
-  ImpactImages() {
-    _impactImageList = _getListOfImages();
-    timer = Timer.periodic(Duration(seconds: imageUpdateDuration), _update);
-    _update(timer);
-  }
-  //************************************************************ */
-  // Stream gets updated every imageUpdateDuration seconds.
-  //************************************************************ */
-  void _update(Timer timer) {
-    _controller.sink.add(_getRandomImpactImage());
-  }
-
-  void dispose() {
-    _controller.close();
-  }
-
-  //************************************************************ */
-  // Grab a random impact image from our list.
-  //************************************************************ */
-  String _getRandomImpactImage() {
-    Random rnd = Random();
-    return _impactImageList[rnd.nextInt(_impactImageList.length)];
-  }
-
-  //************************************************************ */
-  // Impact image assets.
-  //************************************************************ */
-
-  List<String> _getListOfImages() {
-    const List<String> _impactImages = [
+const secsBetweenUpdate = 5;
+const List<String> impactImagesList = [
       'assets/impactImages/414x736/money_1.jpeg',
       'assets/impactImages/414x736/money_2.jpeg',
       'assets/impactImages/414x736/money_3.jpeg',
@@ -54,7 +19,25 @@ class ImpactImages {
       'assets/impactImages/414x736/oil_4.jpeg',
       'assets/impactImages/414x736/oil_5.jpeg',
     ];
+class ImpactImages {
+   ImpactImages() {
+    _controller.sink.add(_getRandomImpactImage());
+    Timer.periodic(Duration(seconds: secsBetweenUpdate), (t) {
+      _controller.sink.add(_getRandomImpactImage());
+    });}  
+  final _controller = StreamController<String>();
+  //************************************************************************* */
+  Stream<String> get stream => _controller.stream;
+  //************************************************************************* */
+  void close() {
+    _controller.close();
+  }
+  //************************************************************************* */
+  /// Return one of the impact images to be placed into the stream.
+  //************************************************************************* */
 
-    return _impactImages;
+  String _getRandomImpactImage() {
+    Random rnd = Random();
+    return impactImagesList[rnd.nextInt(impactImagesList.length)];
   }
 }

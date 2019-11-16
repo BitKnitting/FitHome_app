@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'impact_page.dart';
-import 'impact_widgets.dart';
+import 'impact_utils.dart';
+
 
 class ImpactNotActivePage extends ImpactPage {
   final Logger log = Logger('impact_not_active_page.dart');
@@ -20,13 +21,11 @@ class ImpactNotActivePage extends ImpactPage {
     );
   }
 
-  @override
   Widget setTitle(BuildContext context) {
     return (Text('Monitor Not Active'));
   }
 
-  @override
-  Widget buildPlotSection(BuildContext context) {
+  Widget buildActionSection(BuildContext context) {
     return Center(
       child: Container(
         color: Colors.grey[300],

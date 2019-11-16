@@ -18,35 +18,16 @@ class _EnergyPlotState extends State<EnergyPlot> {
   //************************************************************************** */
   //* MockEnergyStream uses dummy data to feed the plot.
   //* FirebaseEnergyStream gets real time updates from Firebase.
-  //************************************************************************** */  
-  MockEnergyStream energyStream = MockEnergyStream();
+  //************************************************************************** */
+  Stream<EnergyReading> energyStream = MockEnergyStream().stream;
   var series;
-  @override
-  void dispose() {
-    energyStream.closeReadingsStream();
-    super.dispose();
-  }
 
   @override
   void initState() {
     super.initState();
-    energyStream.startReadingsStream(widget.monitorName, _onNewReading);
-
-    // Listen to the stream of incoming meter readings.
-    // Stream<EnergyReading> readingStream = monitor.readings();
-    // readingSubscription = readingStream.listen(
-    //   // Put the reading that comes into the stream into the plot data.
-    //   (reading) => setState(
-    //     () {
-    //       // Add the reading to the List that gets plotted.
-    //       energyReadings.add(reading);
-    //       // Plot 10 readings.  This makes the line move...
-    //       if (energyReadings.length > 10) {
-    //         energyReadings.removeAt(0);
-    //       }
-    //     },
-    //   ),
-    // );
+    energyStream.listen((reading) {
+      _onNewReading(reading);
+    });
   }
 
   @override
