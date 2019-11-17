@@ -8,15 +8,14 @@ import 'impact_page.dart';
 import 'impact_stream.dart';
 import 'impact_utils.dart';
 
-
-const ContentOverlayHeight = 140.0;
+const ContentOverlayHeight = 150.0;
 
 class ImpactActivePage extends ImpactPage {
   ImpactActivePage({@required this.monitorName});
   final String monitorName;
   final Logger log = Logger('impact_active_page.dart');
   final DBActionsMock dbActions = DBActionsMock();
- 
+
   Widget buildContentSection(BuildContext context) {
     return FutureBuilder(
         future: getImpactValues(monitorName),
@@ -34,11 +33,9 @@ class ImpactActivePage extends ImpactPage {
         });
   }
 
-
   Widget setTitle(BuildContext context) {
     return (Text('Active'));
   }
-
 
   Widget buildActionSection(BuildContext context) {
     return Center(
@@ -200,7 +197,6 @@ class ImpactActivePage extends ImpactPage {
             ]));
   }
 
-  
   ///************************************************************************************** */
   /// Here is where we calculate the amount of money and
   /// amount of CO2 (relative to gals of gas, acres of forest,
