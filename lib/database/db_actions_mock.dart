@@ -8,9 +8,9 @@ class DBActionsMock extends DBActions {
     var values;
     if (dataPath.contains('insights')) {
       values = {
-        'daily_baseline': 21,
+        'daily_baseline': 21.0,
         'current_average': 19.8,
-        'leakage_baseline': 161
+        'leakage_baseline': 161.0
       };
     }
 
