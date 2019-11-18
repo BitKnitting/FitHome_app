@@ -1,4 +1,3 @@
-import 'package:fithome_app/common_code/globals.dart';
 import 'package:fithome_app/database/db_actions_mock.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
